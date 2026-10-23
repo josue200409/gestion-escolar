@@ -1,19 +1,30 @@
 {% extends 'base.html' %}
 {% block titulo %}Iniciar sesión{% endblock %}
-{% block contenido %}
-<div class="tarjeta" style="max-width: 380px; margin: 3rem auto;">
-  <h1>Iniciar sesión</h1>
-  {% if form.errors %}
-    <p class="error">Usuario o contraseña incorrectos.</p>
-  {% endif %}
-  <form method="post">
-    {% csrf_token %}
-    <label for="id_username">Usuario</label>
-    <input type="text" name="username" id="id_username" autofocus required>
-    <label for="id_password">Contraseña</label>
-    <input type="password" name="password" id="id_password" required>
-    <input type="hidden" name="next" value="{{ next }}">
-    <button type="submit">Entrar</button>
-  </form>
+{% block contenido_acceso %}
+<div class="acceso">
+  <section class="acceso-marca">
+    <div class="acceso-texto">
+      <p class="acceso-nombre">Gestión escolar</p>
+      <h1>Tu aula, en orden.</h1>
+      <p>Entra para ver tus cursos, actividades y asistencia.</p>
+    </div>
+    <div class="tejido" aria-hidden="true"></div>
+  </section>
+
+  <section class="acceso-form">
+    <form method="post">
+      {% csrf_token %}
+      <h2>Iniciar sesión</h2>
+      {% if form.errors %}
+        <p class="error" role="alert">El usuario o la contraseña no son correctos. Revísalos e inténtalo de nuevo.</p>
+      {% endif %}
+      <label for="id_username">Usuario</label>
+      <input type="text" name="username" id="id_username" autocomplete="username" autofocus required>
+      <label for="id_password">Contraseña</label>
+      <input type="password" name="password" id="id_password" autocomplete="current-password" required>
+      <input type="hidden" name="next" value="{{ next }}">
+      <button type="submit">Entrar</button>
+    </form>
+  </section>
 </div>
 {% endblock %}

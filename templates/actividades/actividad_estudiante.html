@@ -30,4 +30,7 @@
     {% if entrega %}<p>{{ entrega.contenido|linebreaksbr }}</p>{% endif %}
   </div>
 {% endif %}
-{% endblock %}
+{% endblock %}py manage.py check
+py manage.py makemigrations actividades
+py manage.py migrate
+py manage.py runserver
