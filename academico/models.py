@@ -1,4 +1,4 @@
-from django.conf import settings
+﻿from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 
@@ -122,3 +122,24 @@ class Matricula(models.Model):
 
     def __str__(self):
         return f"{self.estudiante} en {self.curso}"
+
+
+class Periodo(models.Model):
+    ciclo = models.ForeignKey(CicloLectivo, on_delete=models.CASCADE, related_name='periodos')
+    nombre = models.CharField(max_length=60)  # ej. "Primer bimestre"
+    orden = models.PositiveSmallIntegerField(default=1)
+    fecha_inicio = models.DateField()
+    fecha_fin = models.DateField()
+
+    class Meta:
+        ordering = ['ciclo_id', 'orden']
+        constraints = [
+            models.UniqueConstraint(fields=['ciclo', 'nombre'], name='periodo_unico_por_ciclo'),
+        ]
+
+    def clean(self):
+        if self.fecha_inicio and self.fecha_fin and self.fecha_fin <= self.fecha_inicio:
+            raise ValidationError('La fecha de fin debe ser posterior a la de inicio.')
+
+    def __str__(self):
+        return f"{self.nombre} ({self.ciclo})"

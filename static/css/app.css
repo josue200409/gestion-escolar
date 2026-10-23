@@ -293,3 +293,12 @@ td { padding: 0.7rem 0.9rem; border-top: 1px solid var(--borde); }
     transition: none !important;
   }
 }
+
+/* ---------- Impresión (boletín) ---------- */
+@media print {
+  .lateral, .no-imprimir { display: none !important; }
+  .app { display: block; }
+  body { background: #fff; }
+  .contenido { max-width: none; padding: 0; }
+  .tarjeta, table { border-color: #999; }
+}

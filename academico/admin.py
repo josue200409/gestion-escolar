@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Asignacion, CicloLectivo, Curso, Grado, Materia, Matricula
+from .models import Asignacion, CicloLectivo, Curso, Grado, Materia, Matricula, Periodo
 
 
 @admin.register(CicloLectivo)
@@ -41,3 +41,8 @@ class MatriculaAdmin(admin.ModelAdmin):
     list_display = ('estudiante', 'curso', 'estado', 'fecha')
     list_filter = ('estado', 'curso__ciclo', 'curso__grado')
     search_fields = ('estudiante__username', 'estudiante__first_name', 'estudiante__last_name')
+  
+@admin.register(Periodo)
+class PeriodoAdmin(admin.ModelAdmin):
+      list_display = ('nombre', 'ciclo', 'orden', 'fecha_inicio', 'fecha_fin')
+      list_filter = ('ciclo',)

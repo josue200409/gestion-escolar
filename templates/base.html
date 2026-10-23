@@ -22,11 +22,14 @@
         {% if user.rol == 'docente' %}
           <a href="{% url 'academico:panel_docente' %}"
              {% if seccion == 'academico' or seccion == 'actividades' or seccion == 'asistencia' %}aria-current="page"{% endif %}>Mis cursos</a>
+      {% if seccion == 'academico' or seccion == 'actividades' or seccion == 'asistencia' or seccion == 'calificaciones' %}aria-current="page"{% endif %}>Mis cursos</a>
         {% elif user.rol == 'estudiante' %}
           <a href="{% url 'actividades:panel_estudiante' %}"
              {% if seccion == 'actividades' %}aria-current="page"{% endif %}>Mis actividades</a>
           <a href="{% url 'asistencia:mi_asistencia' %}"
              {% if seccion == 'asistencia' %}aria-current="page"{% endif %}>Mi asistencia</a>
+                       <a href="{% url 'calificaciones:mis_notas' %}"
+             {% if seccion == 'calificaciones' %}aria-current="page"{% endif %}>Mis notas</a>
         {% elif user.rol == 'directivo' %}
           <a href="{% url 'admin:index' %}">Administración</a>
         {% endif %}

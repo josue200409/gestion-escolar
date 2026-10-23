@@ -10,9 +10,9 @@ class EntregaInline(admin.TabularInline):
 
 @admin.register(Actividad)
 class ActividadAdmin(admin.ModelAdmin):
-    list_display = ('titulo', 'asignacion', 'fecha_limite', 'puntaje_maximo')
-    list_filter = ('asignacion__curso__ciclo',)
-    inlines = [EntregaInline]
+      list_display = ('titulo', 'asignacion', 'periodo', 'fecha_limite', 'puntaje_maximo')
+      list_filter = ('asignacion__curso__ciclo', 'periodo')
+      inlines = [EntregaInline]
 
 
 @admin.register(Entrega)

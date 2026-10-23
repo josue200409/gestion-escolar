@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'academico',
     'actividades',
     'asistencia',
+    'calificaciones',
 ]
 
 MIDDLEWARE = [
@@ -143,3 +144,6 @@ MAILERS = {
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'usuarios:inicio'
 LOGOUT_REDIRECT_URL = 'login'
+
+# Nota mínima para aprobar (sobre 100). Confirmar con la escuela.
+NOTA_APROBACION = 60

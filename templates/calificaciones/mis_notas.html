@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block titulo %}Mis notas{% endblock %}
+{% block contenido %}
+<h1>Mis notas</h1>
+
+{% if not matricula %}
+  <div class="tarjeta"><p>No tienes una matrícula activa en el ciclo actual.</p></div>
+{% else %}
+  <p class="secundario">{{ user.get_full_name|default:user.username }} · {{ curso.grado }} {{ curso.seccion }} · Ciclo {{ curso.ciclo }}</p>
+
+  {% if not periodos %}
+    <div class="tarjeta"><p>Este ciclo todavía no tiene periodos definidos.</p></div>
+  {% else %}
+  <table>
+    <thead>
+      <tr>
+        <th>Materia</th>
+        {% for p in periodos %}<th>{{ p.nombre }}</th>{% endfor %}
+        <th>Final</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for f in filas %}
+        <tr>
+          <td>{{ f.materia }}</td>
+          {% for n in f.notas %}
+            <td>{% if n is None %}-{% else %}<span {% if n < minima %}class="error"{% endif %}>{{ n }}</span>{% endif %}</td>
+          {% endfor %}
+          <td><strong>{% if f.final is None %}-{% else %}<span {% if f.final < minima %}class="error"{% endif %}>{{ f.final }}</span>{% endif %}</strong></td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="{{ periodos|length|add:2 }}">Tu curso todavía no tiene materias asignadas.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="tarjeta">
+    <h2>Promedio general: {% if general is None %}-{% else %}{{ general }}{% endif %}</h2>
+    <p class="secundario">Las notas se actualizan cuando tus docentes califican. Nota mínima: {{ minima }}.</p>
+  </div>
+
+  <p class="no-imprimir"><button type="button" onclick="window.print()">Imprimir boletín</button></p>
+  {% endif %}
+{% endif %}
+{% endblock %}

@@ -14,6 +14,13 @@ class Actividad(models.Model):
     descripcion = models.TextField(blank=True)
     fecha_limite = models.DateTimeField()
     puntaje_maximo = models.DecimalField(max_digits=5, decimal_places=2, default=100)
+    periodo = models.ForeignKey(
+          'academico.Periodo',
+          on_delete=models.PROTECT,
+          null=True,
+          blank=True,
+          related_name='actividades',
+      )
     creada = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -21,11 +28,11 @@ class Actividad(models.Model):
         verbose_name_plural = 'actividades'
         ordering = ['-fecha_limite']
 
-    @property
-    def vencida(self):
+@property
+def vencida(self):
         return timezone.now() > self.fecha_limite
 
-    def __str__(self):
+def __str__(self):
         return f"{self.titulo} ({self.asignacion})"
 
 

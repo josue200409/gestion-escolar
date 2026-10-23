@@ -20,7 +20,7 @@ def crear_actividad(request, asignacion_id):
         docente=request.user,
     )
     if request.method == 'POST':
-        form = ActividadForm(request.POST)
+        form = ActividadForm(request.POST, asignacion=asignacion)
         if form.is_valid():
             actividad = form.save(commit=False)
             actividad.asignacion = asignacion
@@ -28,7 +28,7 @@ def crear_actividad(request, asignacion_id):
             messages.success(request, 'La actividad quedó publicada.')
             return redirect('actividades:actividad_docente', actividad_id=actividad.id)
     else:
-        form = ActividadForm()
+                form = ActividadForm(asignacion=asignacion)
     return render(
         request,
         'actividades/crear_actividad.html',

@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block titulo %}Libro de notas{% endblock %}
+{% block contenido %}
+<p><a href="{% url 'academico:curso_docente' asignacion.id %}">← Volver al curso</a></p>
+<h1>Libro de notas</h1>
+<p class="secundario">{{ asignacion.materia }} · {{ asignacion.curso.grado }} {{ asignacion.curso.seccion }} · Ciclo {{ asignacion.curso.ciclo }}</p>
+
+{% if not columnas %}
+  <div class="tarjeta">
+    <p>Este ciclo todavía no tiene periodos. Pide al directivo que los cree en la administración.</p>
+  </div>
+{% else %}
+<table>
+  <thead>
+    <tr>
+      <th>Estudiante</th>
+      {% for c in columnas %}
+        <th>{{ c.periodo.nombre }}<br><small class="secundario">{{ c.actividades }} actividad{{ c.actividades|pluralize:"es" }}</small></th>
+      {% endfor %}
+      <th>Final</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for f in filas %}
+      <tr>
+        <td>{{ f.estudiante.last_name }}, {{ f.estudiante.first_name }}</td>
+        {% for n in f.notas %}
+          <td>{% if n is None %}-{% else %}<span {% if n < minima %}class="error"{% endif %}>{{ n }}</span>{% endif %}</td>
+        {% endfor %}
+        <td><strong>{% if f.final is None %}-{% else %}<span {% if f.final < minima %}class="error"{% endif %}>{{ f.final }}</span>{% endif %}</strong></td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="{{ columnas|length|add:2 }}">No hay estudiantes matriculados.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+<p class="secundario">La nota de cada periodo suma los puntos de las actividades calificadas y las vencidas sin entrega (valen 0). Las entregas sin calificar no cuentan todavía. Nota mínima: {{ minima }}.</p>
+{% endif %}
+{% endblock %}
