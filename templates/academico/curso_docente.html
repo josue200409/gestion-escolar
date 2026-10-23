@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block titulo %}{{ asignacion.materia }}{% endblock %}
+{% block contenido %}
+<p><a href="{% url 'academico:panel_docente' %}">← Volver a mis cursos</a></p>
+<h1>{{ asignacion.materia }}</h1>
+<p class="secundario">{{ asignacion.curso.grado }} {{ asignacion.curso.seccion }} · Ciclo {{ asignacion.curso.ciclo }}</p>
+
+<h2>Actividades</h2>
+<p><a class="boton" href="{% url 'actividades:crear_actividad' asignacion.id %}">Nueva actividad</a></p>
+{% for a in asignacion.actividades.all %}
+  <div class="tarjeta">
+    <strong>{{ a.titulo }}</strong>
+    <p class="secundario">Fecha límite: {{ a.fecha_limite|date:"d/m/Y H:i" }} · Puntaje: {{ a.puntaje_maximo|floatformat:"-2" }}</p>
+    <a href="{% url 'actividades:actividad_docente' a.id %}">Ver entregas</a>
+  </div>
+{% empty %}
+  <div class="tarjeta"><p>Todavía no has publicado actividades.</p></div>
+{% endfor %}
+
+<h2>Estudiantes</h2>
+<table>
+  <thead>
+    <tr><th>#</th><th>Apellidos</th><th>Nombres</th></tr>
+  </thead>
+  <tbody>
+    {% for m in matriculas %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ m.estudiante.last_name }}</td>
+        <td>{{ m.estudiante.first_name }}</td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="3">No hay estudiantes matriculados.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

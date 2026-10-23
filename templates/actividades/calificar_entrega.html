@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block titulo %}Calificar{% endblock %}
+{% block contenido %}
+<p><a href="{% url 'actividades:actividad_docente' entrega.actividad.id %}">← Volver a la actividad</a></p>
+<h1>{{ entrega.actividad.titulo }}</h1>
+<p class="secundario">Estudiante: {{ entrega.estudiante.get_full_name|default:entrega.estudiante.username }}</p>
+
+<div class="tarjeta">
+  <h2>Respuesta</h2>
+  <p>{{ entrega.contenido|linebreaksbr }}</p>
+  <p class="secundario">Entregada el {{ entrega.fecha_entrega|date:"d/m/Y H:i" }}</p>
+</div>
+
+<div class="tarjeta">
+  <h2>Calificación (máximo {{ entrega.actividad.puntaje_maximo|floatformat:"-2" }})</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Guardar calificación</button>
+  </form>
+</div>
+{% endblock %}

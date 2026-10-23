@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block titulo %}{{ actividad.titulo }}{% endblock %}
+{% block contenido %}
+<p><a href="{% url 'actividades:panel_estudiante' %}">← Volver a mis actividades</a></p>
+<h1>{{ actividad.titulo }}</h1>
+<p class="secundario">{{ actividad.asignacion.materia }} · Límite: {{ actividad.fecha_limite|date:"d/m/Y H:i" }} · Puntaje: {{ actividad.puntaje_maximo|floatformat:"-2" }}</p>
+
+<div class="tarjeta">
+  <p>{{ actividad.descripcion|linebreaksbr|default:"Sin descripción." }}</p>
+</div>
+
+{% if entrega and entrega.calificacion is not None %}
+  <div class="tarjeta">
+    <h2>Calificación: {{ entrega.calificacion|floatformat:"-2" }} / {{ actividad.puntaje_maximo|floatformat:"-2" }}</h2>
+    {% if entrega.comentario %}<p>{{ entrega.comentario|linebreaksbr }}</p>{% endif %}
+    <p class="secundario">Tu respuesta:</p>
+    <p>{{ entrega.contenido|linebreaksbr }}</p>
+  </div>
+{% elif puede_entregar %}
+  <div class="tarjeta">
+    <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit">{% if entrega %}Actualizar entrega{% else %}Entregar{% endif %}</button>
+    </form>
+  </div>
+{% else %}
+  <div class="tarjeta">
+    <p class="error">El plazo terminó y ya no se puede entregar.</p>
+    {% if entrega %}<p>{{ entrega.contenido|linebreaksbr }}</p>{% endif %}
+  </div>
+{% endif %}
+{% endblock %}

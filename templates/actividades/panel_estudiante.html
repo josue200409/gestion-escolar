@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block titulo %}Mis actividades{% endblock %}
+{% block contenido %}
+<h1>Mis actividades</h1>
+{% for a in actividades %}
+  <div class="tarjeta">
+    <h2>{{ a.titulo }}</h2>
+    <p class="secundario">{{ a.asignacion.materia }} · Límite: {{ a.fecha_limite|date:"d/m/Y H:i" }}</p>
+    <p>
+      {% if a.mi_entrega and a.mi_entrega.calificacion is not None %}
+        Calificada: {{ a.mi_entrega.calificacion|floatformat:"-2" }} / {{ a.puntaje_maximo|floatformat:"-2" }}
+      {% elif a.mi_entrega %}
+        Entregada, pendiente de calificación
+      {% elif a.vencida %}
+        <span class="error">Vencida sin entregar</span>
+      {% else %}
+        Pendiente de entregar
+      {% endif %}
+    </p>
+    <a class="boton" href="{% url 'actividades:actividad_estudiante' a.id %}">Abrir</a>
+  </div>
+{% empty %}
+  <div class="tarjeta"><p>No tienes actividades por ahora.</p></div>
+{% endfor %}
+{% endblock %}

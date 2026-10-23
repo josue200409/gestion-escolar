@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block titulo %}Mis cursos{% endblock %}
+{% block contenido %}
+<h1>Mis cursos</h1>
+{% for a in asignaciones %}
+  <div class="tarjeta">
+    <h2>{{ a.materia }}</h2>
+    <p>{{ a.curso.grado }} {{ a.curso.seccion }} · Ciclo {{ a.curso.ciclo }}</p>
+    <p class="secundario">{{ a.total_estudiantes }} estudiante{{ a.total_estudiantes|pluralize }}</p>
+    <a class="boton" href="{% url 'academico:curso_docente' a.id %}">Ver estudiantes</a>
+  </div>
+{% empty %}
+  <div class="tarjeta">
+    <p>No tienes cursos asignados en el ciclo activo.</p>
+  </div>
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block titulo %}Nueva actividad{% endblock %}
+{% block contenido %}
+<p><a href="{% url 'academico:curso_docente' asignacion.id %}">← Volver al curso</a></p>
+<h1>Nueva actividad</h1>
+<p class="secundario">{{ asignacion.materia }} · {{ asignacion.curso.grado }} {{ asignacion.curso.seccion }}</p>
+<div class="tarjeta">
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Publicar</button>
+  </form>
+</div>
+{% endblock %}
