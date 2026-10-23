@@ -2,6 +2,7 @@
 {% block titulo %}Mis actividades{% endblock %}
 {% block contenido %}
 <h1>Mis actividades</h1>
+<p><a class="boton" href="{% url 'asistencia:mi_asistencia' %}">Mi asistencia</a></p>
 {% for a in actividades %}
   <div class="tarjeta">
     <h2>{{ a.titulo }}</h2>

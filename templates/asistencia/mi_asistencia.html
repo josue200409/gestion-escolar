@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block titulo %}Mi asistencia{% endblock %}
+{% block contenido %}
+<p><a href="{% url 'actividades:panel_estudiante' %}">← Volver a mis actividades</a></p>
+<h1>Mi asistencia</h1>
+
+<div class="tarjeta">
+  {% if porcentaje is not None %}
+    <h2>{{ porcentaje }}% de asistencia</h2>
+    <p class="secundario">
+      {{ resumen.presentes }} presente{{ resumen.presentes|pluralize }} ·
+      {{ resumen.tardes }} tarde{{ resumen.tardes|pluralize }} ·
+      {{ resumen.ausentes }} ausente{{ resumen.ausentes|pluralize }} ·
+      {{ resumen.justificados }} justificado{{ resumen.justificados|pluralize }}
+    </p>
+  {% else %}
+    <p>Todavía no hay asistencia registrada.</p>
+  {% endif %}
+</div>
+
+{% if registros %}
+<table>
+  <thead>
+    <tr><th>Fecha</th><th>Estado</th><th>Observación</th></tr>
+  </thead>
+  <tbody>
+    {% for r in registros %}
+      <tr>
+        <td>{{ r.fecha|date:"d/m/Y" }}</td>
+        <td>{{ r.get_estado_display }}</td>
+        <td>{{ r.observacion|default:"-" }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endblock %}

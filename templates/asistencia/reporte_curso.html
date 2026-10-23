@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block titulo %}Reporte de asistencia{% endblock %}
+{% block contenido %}
+<p><a href="{% url 'academico:panel_docente' %}">← Volver a mis cursos</a></p>
+<h1>Reporte de asistencia</h1>
+<p class="secundario">{{ curso.grado }} {{ curso.seccion }} · Ciclo {{ curso.ciclo }} · {{ dias_registrados }} día{{ dias_registrados|pluralize }} registrado{{ dias_registrados|pluralize }}</p>
+<p><a class="boton" href="{% url 'asistencia:pasar_lista' curso.id %}">Pasar lista</a></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Estudiante</th><th>Presente</th><th>Ausente</th>
+      <th>Tarde</th><th>Justificado</th><th>% asistencia</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for f in filas %}
+      <tr>
+        <td>{{ f.estudiante.last_name }}, {{ f.estudiante.first_name }}</td>
+        <td>{{ f.c.presentes|default:0 }}</td>
+        <td>{{ f.c.ausentes|default:0 }}</td>
+        <td>{{ f.c.tardes|default:0 }}</td>
+        <td>{{ f.c.justificados|default:0 }}</td>
+        <td>{% if f.porcentaje is not None %}{{ f.porcentaje }}%{% else %}-{% endif %}</td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="6">No hay estudiantes matriculados.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+<p class="secundario">El porcentaje cuenta presentes y tardes sobre los días registrados.</p>
+{% endblock %}

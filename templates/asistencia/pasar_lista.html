@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block titulo %}Pasar lista{% endblock %}
+{% block contenido %}
+<p><a href="{% url 'academico:panel_docente' %}">← Volver a mis cursos</a></p>
+<h1>Pasar lista</h1>
+<p class="secundario">{{ curso.grado }} {{ curso.seccion }} · Ciclo {{ curso.ciclo }}</p>
+
+<div class="tarjeta">
+  <form method="get" style="display:flex; gap:0.5rem; align-items:end;">
+    <div>
+      <label for="fecha">Fecha</label>
+      <input type="date" id="fecha" name="fecha" value="{{ fecha|date:'Y-m-d' }}" max="{{ hoy|date:'Y-m-d' }}">
+    </div>
+    <button type="submit">Ir a esta fecha</button>
+  </form>
+  {% if ya_registrada %}
+    <p class="secundario">Ya hay asistencia guardada para esta fecha. Puedes corregirla.</p>
+  {% endif %}
+</div>
+
+<form method="post">
+  {% csrf_token %}
+  <input type="hidden" name="fecha" value="{{ fecha|date:'Y-m-d' }}">
+  <table>
+    <thead>
+      <tr><th>Estudiante</th><th>Estado</th><th>Observación</th></tr>
+    </thead>
+    <tbody>
+      {% for f in filas %}
+        <tr>
+          <td>{{ f.estudiante.last_name }}, {{ f.estudiante.first_name }}</td>
+          <td>
+            {% for valor, etiqueta in estados %}
+              <label style="margin-right:0.75rem;">
+                <input type="radio" style="width:auto; margin:0 0.25rem 0 0;"
+                       name="estado_{{ f.estudiante.id }}" value="{{ valor }}"
+                       {% if f.estado == valor %}checked{% endif %}>{{ etiqueta }}
+              </label>
+            {% endfor %}
+          </td>
+          <td>
+            <input type="text" name="obs_{{ f.estudiante.id }}" value="{{ f.observacion }}" maxlength="200">
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="3">No hay estudiantes matriculados.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% if filas %}
+    <p><button type="submit">Guardar asistencia</button></p>
+  {% endif %}
+</form>
+{% endblock %}
