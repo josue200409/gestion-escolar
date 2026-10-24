@@ -7,6 +7,7 @@
 
 <div class="tarjeta">
   <p>{{ actividad.descripcion|linebreaksbr|default:"Sin descripción." }}</p>
+  <p><a class="boton" href="{% url 'materiales:archivos_entrega' actividad.id %}">Adjuntar archivos</a></p>
 </div>
 
 {% if entrega and entrega.calificacion is not None %}
@@ -31,6 +32,3 @@
   </div>
 {% endif %}
 {% endblock %}py manage.py check
-py manage.py makemigrations actividades
-py manage.py migrate
-py manage.py runserver

@@ -1,0 +1,64 @@
+{% extends "admin/base_site.html" %}
+{% block breadcrumbs %}
+<div class="breadcrumbs"><a href="{% url 'admin:index' %}">Inicio</a> › Importar desde Excel</div>
+{% endblock %}
+{% block content %}
+<div class="importacion">
+  <div class="ayuda" role="note">
+    Sube un solo archivo de Excel con una hoja para cada grupo de datos (grados, materias, docentes, estudiantes y, si quieres, asignaciones). El sistema crea todo y te devuelve un Excel con el usuario y la contraseña temporal de cada persona. Primero usa <strong>Revisar sin guardar</strong> para ver si el archivo tiene problemas.
+  </div>
+
+  <div class="module">
+    <h2>1. Descarga la plantilla</h2>
+    <p><a class="button" href="{% url 'importacion:plantilla' %}">Descargar plantilla de Excel</a></p>
+    <p class="help">La hoja «Instrucciones» explica qué escribir en cada columna. Las personas se matriculan en el ciclo lectivo activo.</p>
+  </div>
+
+  <div class="module">
+    <h2>2. Sube tu archivo</h2>
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      {% if error_archivo %}<p class="errornote">{{ error_archivo }}</p>{% endif %}
+      <p><label for="archivo">Archivo de Excel (.xlsx, máximo 5 MB)</label><br>
+      <input type="file" id="archivo" name="archivo" accept=".xlsx"></p>
+      <div class="acciones">
+        <button type="submit" name="accion" value="revisar" class="button">Revisar sin guardar</button>
+        <button type="submit" name="accion" value="importar" class="default">Importar y descargar credenciales</button>
+      </div>
+      <p class="help">Importar muchas personas puede tardar uno o dos minutos, porque cada contraseña se protege con cifrado. No cierres la página. Para archivos grandes puedes usar el comando <code>py manage.py importar_escuela archivo.xlsx</code>.</p>
+    </form>
+  </div>
+
+  {% if resultado %}
+  <div class="module">
+    <h2>{% if resultado.errores %}Problemas encontrados{% elif resultado.simulacro %}Revisión: todo está en orden{% else %}Resultado{% endif %}</h2>
+    {% if resultado.errores %}
+      <p class="errornote">No se guardó nada. Corrige estos problemas en el archivo y vuelve a subirlo.</p>
+      <table>
+        <thead><tr><th>Hoja</th><th>Fila</th><th>Problema</th></tr></thead>
+        <tbody>
+          {% for hoja, fila, mensaje in resultado.errores %}
+            <tr><td>{{ hoja }}</td><td>{% if fila %}{{ fila }}{% else %}-{% endif %}</td><td>{{ mensaje }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p>Ciclo lectivo: <strong>{{ resultado.ciclo }}</strong>. Esto es lo que <strong>se crearía</strong> al importar:</p>
+      <table>
+        <tbody>
+          <tr><td>Grados nuevos</td><td>{{ resultado.conteo.grados }}</td></tr>
+          <tr><td>Materias nuevas</td><td>{{ resultado.conteo.materias }}</td></tr>
+          <tr><td>Cursos nuevos</td><td>{{ resultado.conteo.cursos }}</td></tr>
+          <tr><td>Docentes nuevos</td><td>{{ resultado.conteo.docentes }}</td></tr>
+          <tr><td>Estudiantes nuevos</td><td>{{ resultado.conteo.estudiantes }}</td></tr>
+          <tr><td>Matrículas nuevas</td><td>{{ resultado.conteo.matriculas }}</td></tr>
+          <tr><td>Asignaciones nuevas</td><td>{{ resultado.conteo.asignaciones }}</td></tr>
+          <tr><td>Personas que ya existían (no se tocan)</td><td>{{ resultado.existentes|length }}</td></tr>
+        </tbody>
+      </table>
+      <p class="help">Aún no se guardó nada. Si todo se ve bien, pulsa <strong>Importar y descargar credenciales</strong> con el mismo archivo.</p>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

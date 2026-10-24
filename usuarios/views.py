@@ -10,8 +10,11 @@ def inicio(request):
         return redirect('academico:panel_docente')
     if rol == 'estudiante':
         return redirect('actividades:panel_estudiante')
+    if rol == 'familia':
+        return redirect('familias:inicio')
     if rol == 'directivo':
         return redirect('admin:index')
+    # Cualquier otro caso: nunca devolver una respuesta vacía.
     return redirect('usuarios:proximamente')
 
 

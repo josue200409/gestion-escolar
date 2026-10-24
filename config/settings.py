@@ -40,6 +40,9 @@ INSTALLED_APPS = [
     'actividades',
     'asistencia',
     'calificaciones',
+    'familias',
+    'importacion',
+    'materiales',
 ]
 
 MIDDLEWARE = [
@@ -147,3 +150,9 @@ LOGOUT_REDIRECT_URL = 'login'
 
 # Nota mínima para aprobar (sobre 100). Confirmar con la escuela.
 NOTA_APROBACION = 60
+
+# Archivos subidos: carpeta privada, sin ruta pública.
+MEDIA_ROOT = BASE_DIR / 'archivos_privados'
+ARCHIVO_MAX_MB = 10   # documentos e imágenes
+VIDEO_MAX_MB = 50     # videos
+MAX_ARCHIVOS_POR_ENTREGA = 5

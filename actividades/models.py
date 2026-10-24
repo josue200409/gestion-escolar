@@ -15,12 +15,12 @@ class Actividad(models.Model):
     fecha_limite = models.DateTimeField()
     puntaje_maximo = models.DecimalField(max_digits=5, decimal_places=2, default=100)
     periodo = models.ForeignKey(
-          'academico.Periodo',
-          on_delete=models.PROTECT,
-          null=True,
-          blank=True,
-          related_name='actividades',
-      )
+        'academico.Periodo',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='actividades',
+    )
     creada = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -28,11 +28,19 @@ class Actividad(models.Model):
         verbose_name_plural = 'actividades'
         ordering = ['-fecha_limite']
 
-@property
-def vencida(self):
+    def clean(self):
+        # El periodo debe ser del mismo ciclo que el curso; si no, la nota no lo cuenta.
+        if self.periodo_id and self.asignacion_id:
+            if self.periodo.ciclo_id != self.asignacion.curso.ciclo_id:
+                raise ValidationError(
+                    'El periodo debe pertenecer al mismo ciclo lectivo que el curso.'
+                )
+
+    @property
+    def vencida(self):
         return timezone.now() > self.fecha_limite
 
-def __str__(self):
+    def __str__(self):
         return f"{self.titulo} ({self.asignacion})"
 
 

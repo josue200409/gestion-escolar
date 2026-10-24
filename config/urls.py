@@ -14,5 +14,14 @@ urlpatterns = [
     path('', include('usuarios.urls')),
     path('asistencia/', include('asistencia.urls')),
     path('calificaciones/', include('calificaciones.urls')),
+    path('familias/', include('familias.urls')),
+    path('importar/', include('importacion.urls')),
+    path('', include('usuarios.urls')),
+    path('materiales/', include('materiales.urls')),
     path('', include('usuarios.urls')),
 ]
+
+
+admin.site.site_header = 'Gestión escolar'
+admin.site.site_title = 'Gestión escolar'
+admin.site.index_title = 'Panel de administración'

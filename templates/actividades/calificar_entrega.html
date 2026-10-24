@@ -7,6 +7,7 @@
 
 <div class="tarjeta">
   <h2>Respuesta</h2>
+  <p><a href="{% url 'materiales:archivos_entrega_docente' entrega.id %}">Ver archivos adjuntos ({{ entrega.archivos.count }})</a></p>
   <p>{{ entrega.contenido|linebreaksbr }}</p>
   <p class="secundario">Entregada el {{ entrega.fecha_entrega|date:"d/m/Y H:i" }}</p>
 </div>

@@ -1,39 +1,168 @@
 {% extends 'base.html' %}
-{% block titulo %}Libro de notas{% endblock %}
+{% block titulo %}Calificaciones{% endblock %}
 {% block contenido %}
-<p><a href="{% url 'academico:curso_docente' asignacion.id %}">← Volver al curso</a></p>
-<h1>Libro de notas</h1>
-<p class="secundario">{{ asignacion.materia }} · {{ asignacion.curso.grado }} {{ asignacion.curso.seccion }} · Ciclo {{ asignacion.curso.ciclo }}</p>
+<p class="no-imprimir"><a href="{% url 'academico:curso_docente' asignacion.id %}">← Volver al curso</a></p>
+<h1>Calificaciones</h1>
 
-{% if not columnas %}
+<dl class="ficha">
+  <div><dt>Materia</dt><dd>{{ asignacion.materia }}</dd></div>
+  <div><dt>Grado</dt><dd>{{ asignacion.curso.grado }}</dd></div>
+  <div><dt>Sección</dt><dd>{{ asignacion.curso.seccion }}</dd></div>
+  <div><dt>Ciclo</dt><dd>{{ asignacion.curso.ciclo }}</dd></div>
+</dl>
+
+{% if otras|length > 1 %}
+  <p class="selector no-imprimir">
+    <label for="selector-curso">Cambiar de curso</label>
+    <select id="selector-curso" onchange="if (this.value) { window.location.href = this.value; }">
+      {% for o in otras %}
+        <option value="{% url 'calificaciones:libro_notas' o.id %}" {% if o.id == asignacion.id %}selected{% endif %}>{{ o.materia }} · {{ o.curso.grado }} {{ o.curso.seccion }}</option>
+      {% endfor %}
+    </select>
+  </p>
+{% endif %}
+
+{% if not periodos %}
   <div class="tarjeta">
     <p>Este ciclo todavía no tiene periodos. Pide al directivo que los cree en la administración.</p>
   </div>
 {% else %}
-<table>
-  <thead>
-    <tr>
-      <th>Estudiante</th>
-      {% for c in columnas %}
-        <th>{{ c.periodo.nombre }}<br><small class="secundario">{{ c.actividades }} actividad{{ c.actividades|pluralize:"es" }}</small></th>
-      {% endfor %}
-      <th>Final</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for f in filas %}
-      <tr>
-        <td>{{ f.estudiante.last_name }}, {{ f.estudiante.first_name }}</td>
-        {% for n in f.notas %}
-          <td>{% if n is None %}-{% else %}<span {% if n < minima %}class="error"{% endif %}>{{ n }}</span>{% endif %}</td>
+
+<nav class="pestanas no-imprimir" aria-label="Periodos">
+  {% for p in periodos %}
+    <a href="?periodo={{ p.id }}" {% if periodo and p.id == periodo.id %}aria-current="page"{% endif %}>{{ p.nombre }}{% if p.cerrado %}<span class="cerrada">cerrada</span>{% endif %}</a>
+  {% endfor %}
+  <a href="?vista=resumen" {% if not periodo %}aria-current="page"{% endif %}>Resumen del ciclo</a>
+</nav>
+
+{% if periodo %}
+  {% if periodo.cerrado and not editable %}
+    <div class="aviso" role="status">
+      <strong>{{ periodo.nombre }} cerró el {{ periodo.fecha_fin|date:"d/m/Y" }}.</strong>
+      Las notas y las actividades de esta unidad ya no se pueden modificar. Si necesitas corregir algo, pide al administrador que la reabra.
+    </div>
+  {% elif prorroga %}
+    <div class="aviso aviso-info" role="status">
+      <strong>El administrador reabrió {{ periodo.nombre }} para ti hasta el {{ prorroga.hasta|date:"d/m/Y H:i" }}.</strong>
+      {% if prorroga.motivo %}Motivo: {{ prorroga.motivo }}.{% endif %} Pasada esa hora, la unidad vuelve a cerrarse.
+    </div>
+  {% endif %}
+
+  {% if detalle_errores %}
+    <div class="aviso aviso-error" role="alert">
+      <strong>No se guardó nada.</strong> Corrige estas notas e inténtalo de nuevo:
+      <ul>
+        {% for e in detalle_errores %}
+          <li>{{ e.estudiante.nombre_lista }} · {{ e.actividad.titulo }}: {{ e.mensaje }}</li>
         {% endfor %}
-        <td><strong>{% if f.final is None %}-{% else %}<span {% if f.final < minima %}class="error"{% endif %}>{{ f.final }}</span>{% endif %}</strong></td>
-      </tr>
-    {% empty %}
-      <tr><td colspan="{{ columnas|length|add:2 }}">No hay estudiantes matriculados.</td></tr>
-    {% endfor %}
-  </tbody>
-</table>
-<p class="secundario">La nota de cada periodo suma los puntos de las actividades calificadas y las vencidas sin entrega (valen 0). Las entregas sin calificar no cuentan todavía. Nota mínima: {{ minima }}.</p>
+      </ul>
+    </div>
+  {% endif %}
+
+  <div class="herramientas no-imprimir">
+    <div class="herramientas-izquierda">
+      {% if editable %}
+      <details class="nueva-actividad">
+        <summary class="boton">+ Crear actividad</summary>
+        <form method="post" class="tarjeta">
+          {% csrf_token %}
+          <input type="hidden" name="accion" value="crear">
+          <input type="hidden" name="periodo" value="{{ periodo.id }}">
+          <h2>Nueva actividad en {{ periodo.nombre }}</h2>
+          <label for="nueva-titulo">Título</label>
+          <input type="text" id="nueva-titulo" name="titulo" maxlength="200" required>
+          <label for="nueva-limite">Fecha y hora límite</label>
+          <input type="datetime-local" id="nueva-limite" name="fecha_limite" required>
+          <label for="nueva-puntaje">Puntaje máximo</label>
+          <input type="number" id="nueva-puntaje" name="puntaje_maximo" value="10" min="0.01" max="999.99" step="0.01" required>
+          <button type="submit">Crear actividad</button>
+        </form>
+      </details>
+      <button type="submit" form="form-notas">Guardar notas</button>
+      {% endif %}
+    </div>
+    <button type="button" class="secundario-boton" onclick="window.print()">Imprimir cotejo de notas</button>
+  </div>
+
+  {% if not actividades %}
+    <div class="tarjeta">
+      <p>Este periodo todavía no tiene actividades. Usa <strong>+ Crear actividad</strong> para añadir la primera.</p>
+    </div>
+  {% else %}
+    <form method="post" id="form-notas">
+      {% csrf_token %}
+      <input type="hidden" name="accion" value="guardar">
+      <input type="hidden" name="periodo" value="{{ periodo.id }}">
+      <div class="tabla-scroll">
+        <table class="cuadricula">
+          <thead>
+            <tr>
+              <th scope="col" class="col-nombre">Estudiante</th>
+              {% for a in actividades %}
+                <th scope="col" class="num">{{ a.titulo }}<small>sobre {{ a.puntaje_maximo|floatformat:"-2" }} · {{ a.fecha_limite|date:"d/m" }}</small></th>
+              {% endfor %}
+              <th scope="col" class="num">Puntos<small>suma de notas</small></th>
+              <th scope="col" class="num">Nota<small>del periodo</small></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for f in filas %}
+              <tr>
+                <th scope="row" class="col-nombre">{{ f.estudiante.nombre_lista }}</th>
+                {% for c in f.celdas %}
+                  <td class="num">
+                    <input type="text" class="nota-input" inputmode="decimal" autocomplete="off"
+                           name="{{ c.nombre }}" value="{{ c.valor }}"
+                           aria-label="Nota de {{ f.estudiante.get_full_name|default:f.estudiante.username }}"
+                           {% if c.error %}aria-invalid="true"{% endif %}{% if not editable %} readonly{% endif %}>
+                    {% if c.entrego %}<span class="pista">Entregó</span>{% endif %}
+                    {% if c.error %}<span class="pista error">{{ c.error }}</span>{% endif %}
+                  </td>
+                {% endfor %}
+                <td class="num">{% if f.total is None %}-{% else %}{{ f.total|floatformat:2 }}{% endif %}</td>
+                <td class="num"><strong>{% if f.nota is None %}-{% else %}<span {% if f.nota < minima %}class="error"{% endif %}>{{ f.nota }}</span>{% endif %}</strong></td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="{{ actividades|length|add:3 }}">No hay estudiantes matriculados.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if editable %}<p class="no-imprimir"><button type="submit">Guardar notas</button></p>{% endif %}
+    </form>
+    {% if editable %}<p class="secundario no-imprimir">Escribe la nota de cada actividad y pulsa <strong>Guardar notas</strong>: se guardan todas a la vez. Una celda vacía significa «sin calificar». «Entregó» indica que el estudiante ya entregó y falta calificar. La nota del periodo cuenta las actividades calificadas y las vencidas sin entrega (valen 0). Nota mínima: {{ minima }}.</p>{% endif %}
+  {% endif %}
+
+{% else %}
+  <div class="tabla-scroll">
+    <table class="cuadricula">
+      <thead>
+        <tr>
+          <th scope="col" class="col-nombre">Estudiante</th>
+          {% for c in columnas %}
+            <th scope="col" class="num">{{ c.periodo.nombre }}<small>{{ c.actividades }} actividad{{ c.actividades|pluralize:"es" }}</small></th>
+          {% endfor %}
+          <th scope="col" class="num">Final</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in filas %}
+          <tr>
+            <th scope="row" class="col-nombre">{{ f.estudiante.nombre_lista }}</th>
+            {% for n in f.notas %}
+              <td class="num">{% if n is None %}-{% else %}<span {% if n < minima %}class="error"{% endif %}>{{ n }}</span>{% endif %}</td>
+            {% endfor %}
+            <td class="num"><strong>{% if f.final is None %}-{% else %}<span {% if f.final < minima %}class="error"{% endif %}>{{ f.final }}</span>{% endif %}</strong></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="{{ columnas|length|add:2 }}">No hay estudiantes matriculados.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="no-imprimir"><button type="button" class="secundario-boton" onclick="window.print()">Imprimir resumen</button></p>
+  <p class="secundario">La nota de cada periodo suma los puntos de las actividades calificadas y las vencidas sin entrega (valen 0). Las entregas sin calificar no cuentan todavía. Nota mínima: {{ minima }}.</p>
+{% endif %}
+
 {% endif %}
 {% endblock %}

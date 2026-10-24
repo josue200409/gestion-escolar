@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block titulo %}Mis hijos{% endblock %}
+{% block contenido %}
+<h1>Mis hijos</h1>
+
+{% if not resumenes %}
+  <div class="tarjeta">
+    <p>Todavía no hay estudiantes vinculados a tu cuenta. Pide a la escuela que los vincule.</p>
+  </div>
+{% else %}
+  <p class="secundario">Elige a un estudiante para ver sus notas, su asistencia y sus actividades.</p>
+  <div class="hijos">
+    {% for r in resumenes %}
+      <article class="tarjeta">
+        <h2>{{ r.estudiante.get_full_name|default:r.estudiante.username }}</h2>
+        {% if r.matricula %}
+          <p class="secundario">{{ r.matricula.curso.grado }} {{ r.matricula.curso.seccion }} · Ciclo {{ r.matricula.curso.ciclo }}</p>
+          <div class="cifras">
+            <div class="cifra">
+              <strong {% if r.general is not None and r.general < minima %}class="error"{% endif %}>{{ r.general|default_if_none:"-" }}</strong>
+              <span>Promedio general</span>
+            </div>
+            <div class="cifra">
+              <strong>{% if r.asistencia.porcentaje is None %}-{% else %}{{ r.asistencia.porcentaje }}%{% endif %}</strong>
+              <span>Asistencia</span>
+            </div>
+            <div class="cifra">
+              <strong>{{ r.sin_entregar }}</strong>
+              <span>Tareas sin entregar</span>
+            </div>
+          </div>
+        {% else %}
+          <p class="secundario">No tiene una matrícula activa en el ciclo actual.</p>
+        {% endif %}
+        <a class="boton" href="{% url 'familias:hijo' r.estudiante.id %}">Ver detalle</a>
+      </article>
+    {% endfor %}
+  </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block titulo %}Archivos de la entrega{% endblock %}
+{% block contenido %}
+<p><a href="{% url 'actividades:calificar_entrega' entrega.id %}">← Volver a calificar</a></p>
+<h1>Archivos de la entrega</h1>
+<p class="secundario">{{ entrega.estudiante.get_full_name|default:entrega.estudiante.username }} · {{ entrega.actividad.titulo }}</p>
+
+{% for a in archivos %}
+  <div class="tarjeta">
+    <div class="fila">
+      <div>
+        <strong>{{ a.nombre_original }}</strong>
+        <p class="secundario">Subido el {{ a.subido|date:"d/m/Y H:i" }}</p>
+      </div>
+      <a class="boton" href="{% url 'materiales:descargar_archivo_entrega' a.id %}">Descargar</a>
+    </div>
+  </div>
+{% empty %}
+  <div class="tarjeta"><p>Este estudiante no adjuntó archivos.</p></div>
+{% endfor %}
+{% endblock %}

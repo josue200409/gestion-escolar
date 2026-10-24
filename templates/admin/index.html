@@ -1,0 +1,24 @@
+{% extends "admin/index.html" %}
+{% block content %}
+<details class="guia" open>
+  <summary>Por dónde empezar</summary>
+  <p>Para preparar un año escolar, crea los datos en este orden: cada paso necesita el anterior. En los formularios, los nombres de campo en negrita son obligatorios.</p>
+  <ol>
+    <li><a href="{% url 'admin:academico_ciclolectivo_changelist' %}"><strong>Ciclo lectivo</strong></a>: el año escolar (por ejemplo, 2026). Márcalo como activo.</li>
+    <li><a href="{% url 'admin:academico_periodo_changelist' %}"><strong>Periodos</strong></a>: las partes del año (bimestres, trimestres o unidades).</li>
+    <li><a href="{% url 'admin:academico_grado_changelist' %}"><strong>Grados</strong></a> y <a href="{% url 'admin:academico_materia_changelist' %}"><strong>Materias</strong></a>: los niveles y las asignaturas de la escuela. Se crean una sola vez.</li>
+    <li><a href="{% url 'admin:academico_curso_changelist' %}"><strong>Cursos</strong></a>: un grado con su sección en el ciclo (por ejemplo, Primero Básico A).</li>
+    <li><strong>Usuarios</strong>: crea a los docentes, a los estudiantes y a las familias, y asígnales su rol.</li>
+    <li><a href="{% url 'admin:academico_asignacion_changelist' %}"><strong>Asignaciones</strong></a>: qué docente da qué materia en cada curso.</li>
+    <li><a href="{% url 'admin:academico_matricula_changelist' %}"><strong>Matrículas</strong></a>: en qué curso está cada estudiante.</li>
+    {% url 'admin:familias_vinculo_changelist' as url_vinculos %}
+    {% if url_vinculos %}<li><a href="{{ url_vinculos }}"><strong>Vínculos familiares</strong></a>: qué estudiantes tiene a su cargo cada familiar. Solo verá a los estudiantes vinculados aquí.</li>{% endif %}
+  </ol>
+  <p class="nota">Las asignaciones y las matrículas también se pueden agregar desde la pantalla de cada curso.</p>
+  {% url 'importacion:importar' as url_importar %}
+  {% if url_importar %}<p class="nota">¿Tienes los datos en una hoja de cálculo? <a href="{{ url_importar }}">Impórtalos desde Excel</a>: crea grados, materias, docentes, estudiantes y sus usuarios de una sola vez.</p>{% endif %}
+  {% url 'admin:calificaciones_prorroga_changelist' as url_permisos %}
+  {% if url_permisos %}<p class="nota">Cada unidad se cierra sola al llegar su fecha de fin. Si un docente necesita corregir notas después, dale un <a href="{{ url_permisos }}">permiso de edición fuera de fecha</a>.</p>{% endif %}
+</details>
+{{ block.super }}
+{% endblock %}

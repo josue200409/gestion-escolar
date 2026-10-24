@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% block titulo %}{{ estudiante.get_full_name|default:estudiante.username }}{% endblock %}
+{% block contenido %}
+<p class="no-imprimir"><a href="{% url 'familias:inicio' %}">← Mis hijos</a></p>
+<h1>{{ estudiante.get_full_name|default:estudiante.username }}</h1>
+
+{% if not matricula %}
+  <div class="tarjeta">
+    <p>Este estudiante no tiene una matrícula activa en el ciclo actual, por eso todavía no hay notas, asistencia ni actividades para mostrar.</p>
+  </div>
+{% else %}
+  <p class="secundario">{{ curso.grado }} {{ curso.seccion }} · Ciclo {{ curso.ciclo }} · Tu vínculo: {{ vinculo.get_parentesco_display }}</p>
+
+  <h2>Notas</h2>
+  {% if not notas.periodos %}
+    <div class="tarjeta"><p>Este ciclo todavía no tiene periodos definidos.</p></div>
+  {% else %}
+    <table>
+      <thead>
+        <tr>
+          <th>Materia</th>
+          {% for p in notas.periodos %}<th>{{ p.nombre }}</th>{% endfor %}
+          <th>Final</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in notas.filas %}
+          <tr>
+            <td>{{ f.materia }}</td>
+            {% for n in f.notas %}
+              <td>{% if n is None %}-{% else %}<span {% if n < minima %}class="error"{% endif %}>{{ n }}</span>{% endif %}</td>
+            {% endfor %}
+            <td><strong>{% if f.final is None %}-{% else %}<span {% if f.final < minima %}class="error"{% endif %}>{{ f.final }}</span>{% endif %}</strong></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="{{ notas.periodos|length|add:2 }}">El curso todavía no tiene materias asignadas.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div class="tarjeta">
+      <h2>Promedio general: {% if notas.general is None %}-{% else %}{{ notas.general }}{% endif %}</h2>
+      <p class="secundario">Las notas se actualizan cuando los docentes califican. Nota mínima: {{ minima }}.</p>
+    </div>
+    <p class="no-imprimir"><button type="button" onclick="window.print()">Imprimir boletín</button></p>
+  {% endif %}
+
+  <div class="no-imprimir">
+    <h2>Asistencia</h2>
+    {% if asistencia.total == 0 %}
+      <div class="tarjeta"><p>Todavía no hay asistencia registrada en este ciclo.</p></div>
+    {% else %}
+      <div class="cifras">
+        <div class="cifra"><strong>{{ asistencia.porcentaje }}%</strong><span>Asistencia</span></div>
+        <div class="cifra"><strong>{{ asistencia.conteo.presente }}</strong><span>Presente</span></div>
+        <div class="cifra"><strong>{{ asistencia.conteo.tarde }}</strong><span>Tarde</span></div>
+        <div class="cifra"><strong>{{ asistencia.conteo.ausente }}</strong><span>Ausente</span></div>
+        <div class="cifra"><strong>{{ asistencia.conteo.justificado }}</strong><span>Justificado</span></div>
+      </div>
+      <p class="secundario">El porcentaje cuenta como asistencia los días presente y tarde, sobre los {{ asistencia.total }} días registrados.</p>
+      <table>
+        <thead><tr><th>Fecha</th><th>Estado</th><th>Observación</th></tr></thead>
+        <tbody>
+          {% for a in asistencia.recientes %}
+            <tr>
+              <td>{{ a.fecha|date:"d/m/Y" }}</td>
+              <td>{{ a.get_estado_display }}</td>
+              <td>{{ a.observacion|default:"-" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <p class="secundario">Se muestran los últimos 10 registros.</p>
+    {% endif %}
+
+    <h2>Actividades</h2>
+    <div class="cifras">
+      <div class="cifra"><strong>{{ actividades.conteo.vencida }}</strong><span>Vencidas sin entrega</span></div>
+      <div class="cifra"><strong>{{ actividades.conteo.pendiente }}</strong><span>Pendientes</span></div>
+      <div class="cifra"><strong>{{ actividades.conteo.entregada }}</strong><span>Entregadas, por calificar</span></div>
+      <div class="cifra"><strong>{{ actividades.conteo.calificada }}</strong><span>Calificadas</span></div>
+    </div>
+
+    {% if actividades.por_atender %}
+      <h3>Por atender</h3>
+      <table>
+        <thead><tr><th>Actividad</th><th>Materia</th><th>Fecha límite</th><th>Estado</th></tr></thead>
+        <tbody>
+          {% for f in actividades.por_atender %}
+            <tr>
+              <td>{{ f.actividad.titulo }}</td>
+              <td>{{ f.actividad.asignacion.materia }}</td>
+              <td>{{ f.actividad.fecha_limite|date:"d/m/Y H:i" }}</td>
+              <td><span class="estado estado-{{ f.estado }}">{{ f.etiqueta }}</span></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+
+    {% if actividades.calificadas %}
+      <h3>Calificadas recientemente</h3>
+      <table>
+        <thead><tr><th>Actividad</th><th>Materia</th><th>Fecha límite</th><th>Nota</th></tr></thead>
+        <tbody>
+          {% for f in actividades.calificadas %}
+            <tr>
+              <td>{{ f.actividad.titulo }}</td>
+              <td>{{ f.actividad.asignacion.materia }}</td>
+              <td>{{ f.actividad.fecha_limite|date:"d/m/Y H:i" }}</td>
+              <td><span class="estado estado-calificada">{{ f.entrega.calificacion|floatformat:"-2" }} / {{ f.actividad.puntaje_maximo|floatformat:"-2" }}</span></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+
+    {% if not actividades.por_atender and not actividades.calificadas %}
+      <div class="tarjeta"><p>El curso todavía no tiene actividades publicadas.</p></div>
+    {% endif %}
+  </div>
+{% endif %}
+{% endblock %}

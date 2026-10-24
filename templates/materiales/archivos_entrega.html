@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block titulo %}Archivos de mi entrega{% endblock %}
+{% block contenido %}
+<p><a href="{% url 'actividades:actividad_estudiante' actividad.id %}">← Volver a la actividad</a></p>
+<h1>Archivos de mi entrega</h1>
+<p class="secundario">{{ actividad.titulo }} · {{ actividad.asignacion.materia }}</p>
+
+{% if puede_subir %}
+  <div class="tarjeta">
+    <h2>Adjuntar un archivo</h2>
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <p class="secundario">Hasta {{ max_archivos }} archivos. Documentos e imágenes hasta {{ limite_archivo }} MB; videos hasta {{ limite_video }} MB.</p>
+      <button type="submit">Subir archivo</button>
+    </form>
+  </div>
+{% else %}
+  <div class="tarjeta">
+    <p class="secundario">Ya no se pueden cambiar los archivos: el plazo terminó o la actividad ya fue calificada.</p>
+  </div>
+{% endif %}
+
+{% for a in archivos %}
+  <div class="tarjeta">
+    <div class="fila">
+      <div>
+        <strong>{{ a.nombre_original }}</strong>
+        <p class="secundario">Subido el {{ a.subido|date:"d/m/Y H:i" }}</p>
+      </div>
+      <div>
+        <a class="boton" href="{% url 'materiales:descargar_archivo_entrega' a.id %}">Descargar</a>
+        {% if puede_subir %}
+          <form method="post" action="{% url 'materiales:eliminar_archivo_entrega' a.id %}"
+                style="display:inline"
+                onsubmit="return confirm('¿Quitar este archivo de tu entrega?');">
+            {% csrf_token %}
+            <button type="submit" class="peligro">Quitar</button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% empty %}
+  <div class="tarjeta"><p>Todavía no has adjuntado archivos.</p></div>
+{% endfor %}
+{% endblock %}

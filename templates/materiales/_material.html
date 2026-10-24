@@ -1,0 +1,25 @@
+<div class="tarjeta">
+  <div class="fila">
+    <div>
+      <h2>{{ m.titulo }}</h2>
+      {% if m.descripcion %}<p>{{ m.descripcion|linebreaksbr }}</p>{% endif %}
+      <p class="secundario">Publicado el {{ m.creado|date:"d/m/Y" }}</p>
+    </div>
+    {% if puede_eliminar %}
+      <form method="post" action="{% url 'materiales:eliminar_material' m.id %}"
+            onsubmit="return confirm('¿Eliminar este material?');">
+        {% csrf_token %}
+        <button type="submit" class="peligro">Eliminar</button>
+      </form>
+    {% endif %}
+  </div>
+  {% if m.archivo %}
+    <p><a class="boton" href="{% url 'materiales:descargar_material' m.id %}">Descargar archivo</a></p>
+  {% endif %}
+  {% if m.id_youtube %}
+    <iframe class="video"
+            src="https://www.youtube-nocookie.com/embed/{{ m.id_youtube }}"
+            title="{{ m.titulo }}" loading="lazy" allowfullscreen
+            referrerpolicy="strict-origin-when-cross-origin"></iframe>
+  {% endif %}
+</div>

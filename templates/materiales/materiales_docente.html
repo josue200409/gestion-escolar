@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block titulo %}Material de apoyo{% endblock %}
+{% block contenido %}
+<p><a href="{% url 'academico:curso_docente' asignacion.id %}">← Volver al curso</a></p>
+<h1>Material de apoyo</h1>
+<p class="secundario">{{ asignacion.materia }} · {{ asignacion.curso.grado }} {{ asignacion.curso.seccion }}</p>
+
+<div class="tarjeta">
+  <h2>Publicar material</h2>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <p class="secundario">Documentos e imágenes hasta {{ limite_archivo }} MB. Videos hasta {{ limite_video }} MB; para videos largos, usa un enlace de YouTube.</p>
+    <button type="submit">Publicar</button>
+  </form>
+</div>
+
+{% for m in materiales %}
+  {% include 'materiales/_material.html' with puede_eliminar=True %}
+{% empty %}
+  <div class="tarjeta"><p>Todavía no has publicado material en este curso.</p></div>
+{% endfor %}
+{% endblock %}

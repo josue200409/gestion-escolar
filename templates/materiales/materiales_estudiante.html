@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block titulo %}Material de apoyo{% endblock %}
+{% block contenido %}
+<h1>Material de apoyo</h1>
+{% for a in asignaciones %}
+  <h2>{{ a.materia }}</h2>
+  {% for m in a.materiales.all %}
+    {% include 'materiales/_material.html' with puede_eliminar=False %}
+  {% empty %}
+    <div class="tarjeta"><p class="secundario">Tu docente todavía no ha publicado material de esta materia.</p></div>
+  {% endfor %}
+{% empty %}
+  <div class="tarjeta"><p>No tienes materias asignadas en el ciclo actual.</p></div>
+{% endfor %}
+{% endblock %}

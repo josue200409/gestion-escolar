@@ -1,4 +1,4 @@
-{% load static %}
+{% load static escuela %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -11,48 +11,86 @@
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
 </head>
-<body>
+<body{% if user.is_authenticated %} class="con-sesion"{% endif %}>
 {% if user.is_authenticated %}
   {% with seccion=request.resolver_match.app_name %}
-  <div class="app">
-    <aside class="lateral">
-      <div class="tejido" aria-hidden="true"></div>
-      <div class="marca"><a href="{% url 'usuarios:inicio' %}">Gestión escolar</a></div>
-      <nav class="menu" aria-label="Principal">
-        {% if user.rol == 'docente' %}
-          <a href="{% url 'academico:panel_docente' %}"
-             {% if seccion == 'academico' or seccion == 'actividades' or seccion == 'asistencia' %}aria-current="page"{% endif %}>Mis cursos</a>
-      {% if seccion == 'academico' or seccion == 'actividades' or seccion == 'asistencia' or seccion == 'calificaciones' %}aria-current="page"{% endif %}>Mis cursos</a>
-        {% elif user.rol == 'estudiante' %}
-          <a href="{% url 'actividades:panel_estudiante' %}"
-             {% if seccion == 'actividades' %}aria-current="page"{% endif %}>Mis actividades</a>
-          <a href="{% url 'asistencia:mi_asistencia' %}"
-             {% if seccion == 'asistencia' %}aria-current="page"{% endif %}>Mi asistencia</a>
-                       <a href="{% url 'calificaciones:mis_notas' %}"
-             {% if seccion == 'calificaciones' %}aria-current="page"{% endif %}>Mis notas</a>
-        {% elif user.rol == 'directivo' %}
-          <a href="{% url 'admin:index' %}">Administración</a>
-        {% endif %}
-      </nav>
-      <div class="perfil">
-        <div>
-          <strong>{{ user.get_full_name|default:user.username }}</strong>
-          <span>{{ user.get_rol_display }}</span>
-        </div>
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  <header class="barra">
+    <button type="button" class="barra-menu" id="alternar-menu" aria-label="Mostrar u ocultar el menú" aria-controls="menu-lateral" aria-expanded="true">
+      <span></span><span></span><span></span>
+    </button>
+    <a class="barra-marca" href="{% url 'usuarios:inicio' %}">Gestión escolar</a>
+    <div class="barra-espacio"></div>
+    {% ciclo_activo as ciclo %}
+    {% if ciclo %}<span class="barra-ciclo">Ciclo <strong>{{ ciclo.nombre }}</strong></span>{% endif %}
+    <details class="barra-usuario">
+      <summary>
+        <span class="avatar" aria-hidden="true">{{ user.first_name|slice:":1"|default:user.username|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}</span>
+        <span class="barra-nombre">{{ user.first_name|default:user.username }}</span>
+      </summary>
+      <div class="barra-cuenta">
+        <strong>{{ user.get_full_name|default:user.username }}</strong>
+        <span>{{ user.get_rol_display }}</span>
         <form method="post" action="{% url 'logout' %}">
           {% csrf_token %}
           <button type="submit" class="salir">Cerrar sesión</button>
         </form>
       </div>
+    </details>
+  </header>
+
+  <div class="app">
+    <aside class="lateral" id="menu-lateral">
+      <nav class="menu" aria-label="Principal">
+        {% if user.rol == 'docente' %}
+          <p class="menu-titulo">Aula</p>
+          <a href="{% url 'academico:panel_docente' %}"
+             {% if seccion == 'academico' or seccion == 'actividades' or seccion == 'asistencia' or seccion == 'calificaciones' %}aria-current="page"{% endif %}>Mis cursos</a>
+        {% elif user.rol == 'estudiante' %}
+          <p class="menu-titulo">Mi aula</p>
+          <a href="{% url 'actividades:panel_estudiante' %}"
+             {% if seccion == 'actividades' %}aria-current="page"{% endif %}>Mis actividades</a>
+          <a href="{% url 'asistencia:mi_asistencia' %}"
+             {% if seccion == 'asistencia' %}aria-current="page"{% endif %}>Mi asistencia</a>
+                       <a href="{% url 'materiales:materiales_estudiante' %}"
+             {% if seccion == 'materiales' %}aria-current="page"{% endif %}>Material de apoyo</a>
+          <a href="{% url 'calificaciones:mis_notas' %}"
+             {% if seccion == 'calificaciones' %}aria-current="page"{% endif %}>Mis notas</a>
+        {% elif user.rol == 'familia' %}
+          <p class="menu-titulo">Familia</p>
+          <a href="{% url 'familias:inicio' %}"
+             {% if seccion == 'familias' %}aria-current="page"{% endif %}>Mis hijos</a>
+        {% elif user.rol == 'directivo' %}
+          <p class="menu-titulo">Gestión</p>
+          <a href="{% url 'admin:index' %}">Administración</a>
+        {% endif %}
+      </nav>
+      <div class="tejido" aria-hidden="true"></div>
     </aside>
-    <main class="contenido">
+
+    <main class="contenido" id="contenido">
       {% for mensaje in messages %}
-        <div class="aviso" role="status">{{ mensaje }}</div>
+        <div class="aviso aviso-{{ mensaje.tags }}" role="{% if mensaje.level >= 40 %}alert{% else %}status{% endif %}">{{ mensaje }}</div>
       {% endfor %}
       {% block contenido %}{% endblock %}
     </main>
   </div>
   {% endwith %}
+  <script>
+    (function () {
+      var cuerpo = document.body;
+      var boton = document.getElementById('alternar-menu');
+      if (!boton) { return; }
+      if (window.matchMedia('(max-width: 820px)').matches) {
+        cuerpo.classList.add('menu-cerrado');
+        boton.setAttribute('aria-expanded', 'false');
+      }
+      boton.addEventListener('click', function () {
+        var cerrado = cuerpo.classList.toggle('menu-cerrado');
+        boton.setAttribute('aria-expanded', cerrado ? 'false' : 'true');
+      });
+    })();
+  </script>
 {% else %}
   <main class="solo">
     {% block contenido_publico %}{% block contenido_acceso %}{% endblock %}{% endblock %}
