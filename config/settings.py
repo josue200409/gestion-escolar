@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'familias',
     'importacion',
     'materiales',
+    'seguridad',
 ]
 
 MIDDLEWARE = [
@@ -53,6 +54,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'seguridad.middleware.CambioClaveObligatorio',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -157,3 +159,12 @@ ARCHIVO_MAX_MB = 10   # documentos e imágenes
 VIDEO_MAX_MB = 50     # videos
 MAX_ARCHIVOS_POR_ENTREGA = 5
 MAX_ADJUNTOS = 5  # archivos de apoyo por actividad
+
+# ---------- Seguridad de sesión e inicio de sesión ----------
+SESSION_COOKIE_AGE = 60 * 60            # la sesión vence tras 1 hora sin actividad
+SESSION_SAVE_EVERY_REQUEST = True       # cada visita renueva el plazo
+SESSION_COOKIE_SECURE = not DEBUG       # solo por HTTPS cuando DEBUG sea False
+CSRF_COOKIE_SECURE = not DEBUG
+
+LOGIN_MAX_INTENTOS = 5                  # intentos fallidos permitidos...
+LOGIN_VENTANA_MINUTOS = 15              # ...dentro de esta ventana de tiempo

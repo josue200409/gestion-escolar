@@ -62,3 +62,12 @@ class MatriculaAdmin(admin.ModelAdmin):
     search_fields = (
         'estudiante__username', 'estudiante__first_name', 'estudiante__last_name'
     )
+
+@admin.register(Asignacion)
+class AsignacionAdmin(admin.ModelAdmin):
+    list_display = ('materia', 'curso', 'docente')
+    list_filter = ('curso__ciclo', 'curso__grado')
+    search_fields = (
+        'materia__nombre', 'docente__username',
+        'docente__first_name', 'docente__last_name',
+    )

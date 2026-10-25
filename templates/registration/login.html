@@ -15,8 +15,8 @@
     <form method="post">
       {% csrf_token %}
       <h2>Iniciar sesión</h2>
-      {% if form.errors %}
-        <p class="error" role="alert">El usuario o la contraseña no son correctos. Revísalos e inténtalo de nuevo.</p>
+      {% if form.non_field_errors %}
+        <p class="error" role="alert">{{ form.non_field_errors.0 }}</p>
       {% endif %}
       <label for="id_username">Usuario</label>
       <input type="text" name="username" id="id_username" autocomplete="username" autofocus required>

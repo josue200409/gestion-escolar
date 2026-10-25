@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block titulo %}Cambiar contraseña{% endblock %}
+{% block contenido %}
+<h1>{% if forzado %}Elige tu contraseña{% else %}Cambiar contraseña{% endif %}</h1>
+<div class="tarjeta">
+  {% if forzado %}
+    <p>Tu contraseña actual es temporal. Antes de continuar, elige una nueva que solo tú conozcas.</p>
+  {% endif %}
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Guardar contraseña</button>
+  </form>
+</div>
+{% endblock %}
