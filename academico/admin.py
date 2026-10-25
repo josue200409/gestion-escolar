@@ -1,259 +1,64 @@
 from django.contrib import admin
-from django.db.models import Count, Q
-from django.utils import timezone
-
-from config.admin_utils import ConAyuda
 
 from .models import Asignacion, CicloLectivo, Curso, Grado, Materia, Matricula, Periodo
 
 
-# ---------- Bloques que se editan dentro de un curso ----------
-class AsignacionEnCurso(admin.TabularInline):
+@admin.register(CicloLectivo)
+class CicloLectivoAdmin(admin.ModelAdmin):
+    list_display = ('nombre', 'fecha_inicio', 'fecha_fin', 'activo')
+
+
+@admin.register(Grado)
+class GradoAdmin(admin.ModelAdmin):
+    list_display = ('nombre', 'orden')
+
+
+@admin.register(Materia)
+class MateriaAdmin(admin.ModelAdmin):
+    list_display = ('nombre', 'codigo')
+    search_fields = ('nombre',)
+
+
+@admin.register(Periodo)
+class PeriodoAdmin(admin.ModelAdmin):
+    list_display = (
+        'nombre', 'ciclo', 'orden', 'fecha_parcial', 'fecha_examen', 'fecha_limite_notas'
+    )
+    list_filter = ('ciclo',)
+    fieldsets = (
+        (None, {'fields': ('ciclo', 'nombre', 'orden', 'fecha_inicio', 'fecha_fin')}),
+        ('Evaluaciones y entrega de notas', {
+            'fields': ('fecha_parcial', 'fecha_examen', 'fecha_limite_notas'),
+            'description': (
+                'El parcial y el examen final se podrán crear desde su fecha. '
+                'Pasada la fecha límite, nadie puede crear actividades ni calificar '
+                'en esta unidad.'
+            ),
+        }),
+    )
+
+
+class AsignacionInline(admin.TabularInline):
     model = Asignacion
     extra = 1
-    fields = ('materia', 'docente')
-    verbose_name = 'materia con su docente'
-    verbose_name_plural = 'Materias y docentes de este curso'
 
 
-class MatriculaEnCurso(admin.TabularInline):
+class MatriculaInline(admin.TabularInline):
     model = Matricula
-    extra = 1
-    fields = ('estudiante', 'estado')
-    verbose_name = 'estudiante matriculado'
-    verbose_name_plural = 'Estudiantes matriculados en este curso'
+    extra = 0
 
 
-# ---------- Ciclo lectivo ----------
-@admin.register(CicloLectivo)
-class CicloLectivoAdmin(ConAyuda, admin.ModelAdmin):
-    ayuda_lista = (
-        'Un ciclo lectivo es un año escolar completo, por ejemplo 2026. Crea uno por año y '
-        'marca como activo solo el que está en curso: los estudiantes ven su matrícula y '
-        'sus notas del ciclo activo.'
-    )
-    ayuda_formulario = (
-        'Escribe el nombre del año y sus fechas. Marca “activo” solo si es el año que se '
-        'está cursando ahora.'
-    )
-    etiquetas = {
-        'nombre': 'Nombre del ciclo',
-        'fecha_inicio': 'Fecha de inicio',
-        'fecha_fin': 'Fecha de fin',
-        'activo': 'Ciclo en curso (activo)',
-    }
-    ayudas = {
-        'nombre': 'Normalmente es el año, por ejemplo: 2026.',
-        'activo': 'Debe haber un solo ciclo activo a la vez.',
-    }
-    fieldsets = (
-        ('Datos del año escolar', {
-            'description': 'Nombre del ciclo (normalmente el año) y las fechas en que empieza y termina.',
-            'fields': ('nombre', ('fecha_inicio', 'fecha_fin')),
-        }),
-        ('¿Es el año en curso?', {
-            'description': 'Lo que ven los estudiantes (matrícula y notas) depende del ciclo activo.',
-            'fields': ('activo',),
-        }),
-    )
-    list_display = ('nombre', 'fecha_inicio', 'fecha_fin', 'activo')
-    list_filter = ('activo',)
-
-
-# ---------- Periodo ----------
-@admin.register(Periodo)
-class PeriodoAdmin(ConAyuda, admin.ModelAdmin):
-    ayuda_lista = (
-        'Los periodos son las partes en que se divide el año (bimestres, trimestres, unidades). '
-        'Cada actividad se asigna a un periodo y la nota se calcula por periodo. Crea todos los '
-        'periodos del ciclo antes de que los docentes publiquen actividades. Cada periodo se '
-        'cierra solo al pasar su fecha de fin: los docentes ya no podrán cambiar notas ni crear '
-        'actividades en él, salvo que el administrador les dé un permiso de edición fuera de fecha.'
-    )
-    ayuda_formulario = 'Crea un periodo por cada bimestre, trimestre o unidad del año.'
-    etiquetas = {
-        'ciclo': 'Ciclo lectivo',
-        'nombre': 'Nombre del periodo',
-        'orden': 'Número de orden',
-        'fecha_inicio': 'Fecha de inicio',
-        'fecha_fin': 'Fecha de fin',
-    }
-    ayudas = {
-        'nombre': 'Por ejemplo: Primer bimestre.',
-        'orden': '1 es el primero del año, 2 el segundo, y así sucesivamente.',
-    }
-    fieldsets = (
-        ('¿A qué año pertenece?', {
-            'description': 'Elige el ciclo lectivo al que corresponde este periodo.',
-            'fields': ('ciclo',),
-        }),
-        ('Nombre y orden', {
-            'description': 'Cómo se llama el periodo y qué lugar ocupa dentro del año.',
-            'fields': ('nombre', 'orden'),
-        }),
-        ('Fechas', {
-            'description': (
-                'Cuándo empieza y termina. Al pasar la fecha de fin el periodo se cierra y los '
-                'docentes ya no pueden modificarlo. Al crear una actividad, el formulario sugiere '
-                'automáticamente el periodo vigente según estas fechas.'
-            ),
-            'fields': (('fecha_inicio', 'fecha_fin'),),
-        }),
-    )
-    list_display = ('nombre', 'ciclo', 'orden', 'fecha_inicio', 'fecha_fin', 'estado')
-    list_filter = ('ciclo',)
-
-    @admin.display(description='Estado')
-    def estado(self, obj):
-        hoy = timezone.localdate()
-        if hoy > obj.fecha_fin:
-            return 'Cerrado'
-        if hoy < obj.fecha_inicio:
-            return 'Por iniciar'
-        return 'Abierto'
-
-
-# ---------- Grado ----------
-@admin.register(Grado)
-class GradoAdmin(ConAyuda, admin.ModelAdmin):
-    ayuda_lista = (
-        'Los grados son los niveles que ofrece la escuela (por ejemplo, Primero Básico). Se '
-        'crean una sola vez y se reutilizan todos los años. Un curso nace de combinar un grado '
-        'con una sección y un ciclo.'
-    )
-    ayuda_formulario = 'Escribe el nombre del grado y el lugar que ocupa en el orden de la escuela.'
-    etiquetas = {'nombre': 'Nombre del grado', 'orden': 'Posición en la lista'}
-    ayudas = {
-        'nombre': 'Por ejemplo: Primero Básico.',
-        'orden': 'Un número para ordenar los grados: 1 aparece primero, luego 2, y así sucesivamente.',
-    }
-    fieldsets = (
-        ('Datos del grado', {'fields': ('nombre', 'orden')}),
-    )
-    list_display = ('orden', 'nombre')
-    list_display_links = ('nombre',)
-
-
-# ---------- Materia ----------
-@admin.register(Materia)
-class MateriaAdmin(ConAyuda, admin.ModelAdmin):
-    ayuda_lista = (
-        'Las materias son las asignaturas que se enseñan (Matemática, Ciencias, etc.). Se crean '
-        'una vez; después se asignan a un docente en cada curso.'
-    )
-    ayuda_formulario = 'Escribe el nombre de la materia. El código es opcional.'
-    etiquetas = {'nombre': 'Nombre de la materia', 'codigo': 'Código (opcional)'}
-    ayudas = {
-        'nombre': 'Por ejemplo: Matemática.',
-        'codigo': 'Abreviatura interna, por ejemplo MAT-1. Puedes dejarlo vacío.',
-    }
-    fieldsets = (
-        ('Datos de la materia', {'fields': ('nombre', 'codigo')}),
-    )
-    list_display = ('nombre', 'codigo')
-    search_fields = ('nombre', 'codigo')
-
-
-# ---------- Curso ----------
 @admin.register(Curso)
-class CursoAdmin(ConAyuda, admin.ModelAdmin):
-    ayuda_lista = (
-        'Un curso es un grado con su sección dentro de un ciclo, por ejemplo Primero Básico A en '
-        '2026. Dentro del curso se asignan las materias con sus docentes y se matricula a los '
-        'estudiantes.'
-    )
-    ayuda_formulario = (
-        'Primero define el curso. Después, en esta misma pantalla, agrega sus materias con su '
-        'docente y los estudiantes matriculados.'
-    )
-    etiquetas = {'ciclo': 'Ciclo lectivo', 'grado': 'Grado', 'seccion': 'Sección'}
-    ayudas = {
-        'ciclo': 'El año escolar al que pertenece este curso.',
-        'seccion': 'Una letra, por ejemplo A.',
-    }
-    fieldsets = (
-        ('¿Qué curso es?', {
-            'description': (
-                'Elige el ciclo y el grado, y escribe la sección (A, B, C…). No puede repetirse '
-                'la misma combinación de ciclo, grado y sección.'
-            ),
-            'fields': ('ciclo', 'grado', 'seccion'),
-        }),
-    )
-    inlines = [AsignacionEnCurso, MatriculaEnCurso]
-    list_display = ('__str__', 'ciclo', 'estudiantes_activos')
+class CursoAdmin(admin.ModelAdmin):
+    list_display = ('grado', 'seccion', 'ciclo')
     list_filter = ('ciclo', 'grado')
-
-    def get_queryset(self, request):
-        return (
-            super().get_queryset(request)
-            .select_related('ciclo', 'grado')
-            .annotate(n_activos=Count(
-                'matriculas', filter=Q(matriculas__estado=Matricula.Estado.ACTIVA)
-            ))
-        )
-
-    @admin.display(description='Estudiantes activos', ordering='n_activos')
-    def estudiantes_activos(self, obj):
-        return obj.n_activos
+    inlines = [AsignacionInline, MatriculaInline]
 
 
-# ---------- Asignación ----------
-@admin.register(Asignacion)
-class AsignacionAdmin(ConAyuda, admin.ModelAdmin):
-    ayuda_lista = (
-        'Una asignación dice qué docente da qué materia en qué curso. Es lo que conecta al '
-        'docente con el curso: sin ella no podrá ver ni calificar esa materia. También puedes '
-        'hacerlo desde la pantalla del propio curso.'
-    )
-    ayuda_formulario = (
-        'Une a un docente con una materia en un curso. Cada materia solo puede tener un docente '
-        'por curso.'
-    )
-    etiquetas = {'curso': 'Curso', 'materia': 'Materia', 'docente': 'Docente que la imparte'}
-    ayudas = {'docente': 'Solo aparecen usuarios con rol docente.'}
-    fieldsets = (
-        ('¿Quién enseña qué?', {
-            'description': 'Elige el curso, la materia y el docente que la imparte.',
-            'fields': ('curso', 'materia', 'docente'),
-        }),
-    )
-    list_display = ('materia', 'curso', 'docente')
-    list_filter = ('curso__ciclo', 'curso__grado', 'materia')
-    list_select_related = ('materia', 'curso__grado', 'curso__ciclo', 'docente')
-    search_fields = (
-        'materia__nombre', 'docente__username', 'docente__first_name', 'docente__last_name',
-    )
-
-
-# ---------- Matrícula ----------
 @admin.register(Matricula)
-class MatriculaAdmin(ConAyuda, admin.ModelAdmin):
-    ayuda_lista = (
-        'Una matrícula inscribe a un estudiante en un curso. Un estudiante solo puede tener una '
-        'matrícula activa por ciclo. Para retirarlo, cambia el estado a “Retirada” en lugar de '
-        'borrar la matrícula: así se conserva su historial.'
-    )
-    ayuda_formulario = 'Elige el curso y el estudiante. La fecha de matrícula se registra sola.'
-    etiquetas = {'curso': 'Curso', 'estudiante': 'Estudiante', 'estado': 'Estado de la matrícula'}
-    ayudas = {
-        'estudiante': 'Solo aparecen usuarios con rol estudiante.',
-        'estado': (
-            'Activa: aparece en el libro de notas. Retirada: ya no aparece, pero su historial '
-            'se conserva.'
-        ),
-    }
-    fieldsets = (
-        ('Inscripción', {
-            'description': 'Elige a qué curso se inscribe el estudiante.',
-            'fields': ('curso', 'estudiante'),
-        }),
-        ('Estado', {
-            'description': 'Déjala en “Activa” salvo que el estudiante deje el curso.',
-            'fields': ('estado',),
-        }),
-    )
+class MatriculaAdmin(admin.ModelAdmin):
     list_display = ('estudiante', 'curso', 'estado', 'fecha')
     list_filter = ('estado', 'curso__ciclo', 'curso__grado')
-    list_select_related = ('estudiante', 'curso__grado', 'curso__ciclo')
-    search_fields = ('estudiante__username', 'estudiante__first_name', 'estudiante__last_name')
+    search_fields = (
+        'estudiante__username', 'estudiante__first_name', 'estudiante__last_name'
+    )

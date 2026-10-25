@@ -16,4 +16,6 @@ urlpatterns = [
     # Descargas protegidas
     path('descargar/material/<int:material_id>/', views.descargar_material, name='descargar_material'),
     path('descargar/entrega/<int:archivo_id>/', views.descargar_archivo_entrega, name='descargar_archivo_entrega'),
+    path('descargar/adjunto/<int:adjunto_id>/', views.descargar_adjunto, name='descargar_adjunto'),
+    path('docente/adjunto/<int:adjunto_id>/eliminar/', views.eliminar_adjunto, name='eliminar_adjunto'),
 ]

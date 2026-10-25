@@ -1,6 +1,7 @@
 ﻿from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
 
 
 class CicloLectivo(models.Model):
@@ -123,13 +124,15 @@ class Matricula(models.Model):
     def __str__(self):
         return f"{self.estudiante} en {self.curso}"
 
-
 class Periodo(models.Model):
     ciclo = models.ForeignKey(CicloLectivo, on_delete=models.CASCADE, related_name='periodos')
-    nombre = models.CharField(max_length=60)  # ej. "Primer bimestre"
+    nombre = models.CharField(max_length=60)  # ej. "Unidad 1"
     orden = models.PositiveSmallIntegerField(default=1)
     fecha_inicio = models.DateField()
     fecha_fin = models.DateField()
+    fecha_parcial = models.DateField('fecha del parcial', null=True, blank=True)
+    fecha_examen = models.DateField('fecha del examen final', null=True, blank=True)
+    fecha_limite_notas = models.DateField('fecha límite para subir notas', null=True, blank=True)
 
     class Meta:
         ordering = ['ciclo_id', 'orden']
@@ -137,9 +140,20 @@ class Periodo(models.Model):
             models.UniqueConstraint(fields=['ciclo', 'nombre'], name='periodo_unico_por_ciclo'),
         ]
 
+    @property
+    def fecha_cierre(self):
+        """Último día para subir notas: la fecha límite del administrador o, si no hay, el fin de la unidad."""
+        return self.fecha_limite_notas or self.fecha_fin
+
+    @property
+    def notas_abiertas(self):
+        return timezone.localdate() <= self.fecha_cierre
+
     def clean(self):
         if self.fecha_inicio and self.fecha_fin and self.fecha_fin <= self.fecha_inicio:
             raise ValidationError('La fecha de fin debe ser posterior a la de inicio.')
+        if self.fecha_parcial and self.fecha_examen and self.fecha_examen < self.fecha_parcial:
+            raise ValidationError('El examen final no puede ser antes del parcial.')
 
     def __str__(self):
         return f"{self.nombre} ({self.ciclo})"

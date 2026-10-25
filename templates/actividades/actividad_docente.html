@@ -7,6 +7,7 @@
 <div class="tarjeta">
   <p>{{ actividad.descripcion|linebreaksbr|default:"Sin descripción." }}</p>
   <p class="secundario">Fecha límite: {{ actividad.fecha_limite|date:"d/m/Y H:i" }} · Puntaje máximo: {{ actividad.puntaje_maximo|floatformat:"-2" }}</p>
+{% include 'materiales/_adjuntos.html' with puede_eliminar=True %}
 </div>
 
 <table>

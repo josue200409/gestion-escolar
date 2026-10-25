@@ -6,30 +6,30 @@ from actividades.models import Actividad, Entrega
 
 from .models import Prorroga
 
+CERO = Decimal('0')
+
 
 def _redondear(valor):
     return valor.quantize(Decimal('0.1'), rounding=ROUND_HALF_UP)
 
 
-def porcentaje(actividades, entregas, ahora):
-    """Nota (0-100) de un estudiante sobre una lista de actividades.
+def desglose_unidad(actividades, entregas):
+    """Puntos de una unidad: zona (hasta 50), parcial (20) y examen (30); total sobre 100.
 
-    entregas: diccionario {actividad_id: Entrega} del estudiante.
-    Cuenta una actividad si está calificada o si venció sin entrega (vale 0).
-    Devuelve None si todavía no hay nada que contar.
+    entregas: {actividad_id: Entrega} del estudiante.
+    Una actividad sin entrega o sin calificar suma 0 por ahora.
+    Si la unidad todavía no tiene actividades, todo es None.
     """
-    ganados = Decimal('0')
-    posibles = Decimal('0')
+    actividades = list(actividades)
+    if not actividades:
+        return {'zona': None, 'parcial': None, 'examen': None, 'total': None}
+    puntos = {'zona': CERO, 'parcial': CERO, 'examen': CERO}
     for a in actividades:
         entrega = entregas.get(a.id)
         if entrega is not None and entrega.calificacion is not None:
-            ganados += entrega.calificacion
-            posibles += a.puntaje_maximo
-        elif entrega is None and a.fecha_limite < ahora:
-            posibles += a.puntaje_maximo
-    if posibles == 0:
-        return None
-    return _redondear(ganados * 100 / posibles)
+            puntos[a.tipo] += entrega.calificacion
+    puntos['total'] = puntos['zona'] + puntos['parcial'] + puntos['examen']
+    return puntos
 
 
 def promedio(notas):
@@ -44,9 +44,9 @@ def tabla_notas(estudiante, curso, ahora=None):
     """Notas de un estudiante en un curso.
 
     Devuelve {'periodos': [...], 'filas': [{'materia', 'notas', 'final'}], 'general': nota}.
-    Lo usan el estudiante (Mis notas) y la familia.
+    'notas' trae el total (sobre 100) de cada unidad. Lo usan la familia y el estudiante.
+    El parámetro 'ahora' se conserva por compatibilidad con quien ya llama a la función.
     """
-    ahora = ahora or timezone.now()
     periodos = list(curso.ciclo.periodos.all())
     asignaciones = list(
         curso.asignaciones.select_related('materia').order_by('materia__nombre')
@@ -67,7 +67,7 @@ def tabla_notas(estudiante, curso, ahora=None):
                 a for a in actividades
                 if a.asignacion_id == asig.id and a.periodo_id == p.id
             ]
-            notas.append(porcentaje(del_periodo, entregas, ahora))
+            notas.append(desglose_unidad(del_periodo, entregas)['total'])
         filas.append({'materia': asig.materia, 'notas': notas, 'final': promedio(notas)})
 
     return {
@@ -77,16 +77,16 @@ def tabla_notas(estudiante, curso, ahora=None):
     }
 
 
-# ---------- Cierre de periodos ----------
+# ---------- Cierre de unidades ----------
 
 def periodo_cerrado(periodo, hoy=None):
-    """Un periodo se cierra solo cuando pasa su fecha de fin."""
+    """La unidad se cierra al pasar su fecha límite de notas (o su fecha de fin)."""
     hoy = hoy or timezone.localdate()
-    return hoy > periodo.fecha_fin
+    return hoy > periodo.fecha_cierre
 
 
 def prorroga_vigente(asignacion, periodo, ahora=None):
-    """Permiso activo del administrador para esta materia y curso en este periodo."""
+    """Permiso activo del administrador para esta materia y curso en esta unidad."""
     ahora = ahora or timezone.now()
     return (
         Prorroga.objects
@@ -97,7 +97,7 @@ def prorroga_vigente(asignacion, periodo, ahora=None):
 
 
 def puede_modificar(asignacion, periodo, ahora=None):
-    """El docente puede cambiar notas y actividades si el periodo está abierto o tiene permiso."""
+    """El docente puede cambiar notas y actividades si la unidad está abierta o tiene prórroga."""
     ahora = ahora or timezone.now()
     if not periodo_cerrado(periodo, timezone.localdate(ahora)):
         return True
@@ -106,6 +106,6 @@ def puede_modificar(asignacion, periodo, ahora=None):
 
 def mensaje_periodo_cerrado(periodo):
     return (
-        f'«{periodo.nombre}» cerró el {periodo.fecha_fin:%d/%m/%Y}. Ya no se pueden modificar '
-        'notas ni actividades. Pide al administrador que la reabra.'
+        f'«{periodo.nombre}» cerró el {periodo.fecha_cierre:%d/%m/%Y}. Ya no se pueden '
+        'modificar notas ni actividades. Pide al administrador que la reabra.'
     )

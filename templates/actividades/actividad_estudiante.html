@@ -16,6 +16,7 @@
     {% if entrega.comentario %}<p>{{ entrega.comentario|linebreaksbr }}</p>{% endif %}
     <p class="secundario">Tu respuesta:</p>
     <p>{{ entrega.contenido|linebreaksbr }}</p>
+    {% include 'materiales/_adjuntos.html' with puede_eliminar=False %}
   </div>
 {% elif puede_entregar %}
   <div class="tarjeta">

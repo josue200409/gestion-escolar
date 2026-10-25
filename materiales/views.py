@@ -14,7 +14,7 @@ from actividades.models import Actividad, Entrega
 from usuarios.decorators import rol_requerido
 
 from .forms import ArchivoEntregaForm, MaterialForm
-from .models import ArchivoEntrega, Material
+from .models import ArchivoEntrega, Material, AdjuntoActividad 
 
 
 def _es_directivo(usuario):
@@ -239,3 +239,41 @@ def descargar_archivo_entrega(request, archivo_id):
     if not _puede_ver_archivo_entrega(request.user, archivo):
         raise Http404
     return _enviar(archivo.archivo, archivo.nombre_original)
+
+def _puede_ver_actividad(usuario, actividad):
+    if _es_directivo(usuario):
+        return True
+    if usuario.rol == 'docente':
+        return actividad.asignacion.docente_id == usuario.id
+    if usuario.rol == 'estudiante':
+        return Matricula.objects.filter(
+            estudiante=usuario,
+            curso=actividad.asignacion.curso,
+            estado=Matricula.Estado.ACTIVA,
+        ).exists()
+    return False
+
+
+@login_required
+def descargar_adjunto(request, adjunto_id):
+    adjunto = get_object_or_404(
+        AdjuntoActividad.objects.select_related('actividad__asignacion__curso'),
+        pk=adjunto_id,
+    )
+    if not adjunto.archivo or not _puede_ver_actividad(request.user, adjunto.actividad):
+        raise Http404
+    extension = os.path.splitext(adjunto.archivo.name)[1]
+    nombre = f"{slugify(adjunto.titulo) or 'adjunto'}{extension}"
+    return _enviar(adjunto.archivo, nombre)
+
+
+@rol_requerido('docente')
+@require_POST
+def eliminar_adjunto(request, adjunto_id):
+    adjunto = get_object_or_404(
+        AdjuntoActividad, pk=adjunto_id, actividad__asignacion__docente=request.user
+    )
+    actividad_id = adjunto.actividad_id
+    adjunto.delete()
+    messages.success(request, 'El adjunto se eliminó.')
+    return redirect('actividades:actividad_docente', actividad_id=actividad_id)

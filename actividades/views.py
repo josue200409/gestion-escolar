@@ -1,3 +1,11 @@
+import os
+
+from django.db import transaction
+
+from materiales.models import AdjuntoActividad
+
+from . import reglas
+
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect, render
@@ -15,24 +23,41 @@ from .models import Actividad, Entrega
 @rol_requerido('docente')
 def crear_actividad(request, asignacion_id):
     asignacion = get_object_or_404(
-        Asignacion.objects.select_related('curso__grado', 'materia'),
+        Asignacion.objects.select_related('curso__grado', 'curso__ciclo', 'materia'),
         pk=asignacion_id,
         docente=request.user,
     )
     if request.method == 'POST':
-        form = ActividadForm(request.POST, asignacion=asignacion)
+        form = ActividadForm(request.POST, request.FILES, asignacion=asignacion)
         if form.is_valid():
-            actividad = form.save(commit=False)
-            actividad.asignacion = asignacion
-            actividad.save()
+            with transaction.atomic():
+                actividad = form.save(commit=False)
+                actividad.asignacion = asignacion
+                actividad.save()
+                for archivo in form.cleaned_data['archivos']:
+                    nombre = os.path.splitext(os.path.basename(archivo.name))[0]
+                    AdjuntoActividad.objects.create(
+                        actividad=actividad, titulo=nombre[:150], archivo=archivo
+                    )
+                if form.cleaned_data['enlace']:
+                    AdjuntoActividad.objects.create(
+                        actividad=actividad,
+                        titulo='Video de apoyo',
+                        enlace=form.cleaned_data['enlace'],
+                    )
             messages.success(request, 'La actividad quedó publicada.')
             return redirect('actividades:actividad_docente', actividad_id=actividad.id)
     else:
-                form = ActividadForm(asignacion=asignacion)
+        form = ActividadForm(asignacion=asignacion)
+
+    resumen = [
+        {'periodo': p, **reglas.resumen_unidad(asignacion, p)}
+        for p in asignacion.curso.ciclo.periodos.all()
+    ]
     return render(
         request,
         'actividades/crear_actividad.html',
-        {'form': form, 'asignacion': asignacion},
+        {'form': form, 'asignacion': asignacion, 'resumen': resumen},
     )
 
 

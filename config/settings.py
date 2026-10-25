@@ -156,3 +156,4 @@ MEDIA_ROOT = BASE_DIR / 'archivos_privados'
 ARCHIVO_MAX_MB = 10   # documentos e imágenes
 VIDEO_MAX_MB = 50     # videos
 MAX_ARCHIVOS_POR_ENTREGA = 5
+MAX_ADJUNTOS = 5  # archivos de apoyo por actividad

@@ -11,11 +11,11 @@
   {% if not periodos %}
     <div class="tarjeta"><p>Este ciclo todavía no tiene periodos definidos.</p></div>
   {% else %}
-  <table>
+   <table>
     <thead>
       <tr>
         <th>Materia</th>
-        {% for p in periodos %}<th>{{ p.nombre }}</th>{% endfor %}
+        {% for p in periodos %}<th>{{ p.nombre }}<br><small class="secundario">sobre 100</small></th>{% endfor %}
         <th>Final</th>
       </tr>
     </thead>
@@ -23,8 +23,8 @@
       {% for f in filas %}
         <tr>
           <td>{{ f.materia }}</td>
-          {% for n in f.notas %}
-            <td>{% if n is None %}-{% else %}<span {% if n < minima %}class="error"{% endif %}>{{ n }}</span>{% endif %}</td>
+          {% for n in f.totales %}
+            <td>{% if n is None %}-{% else %}<span {% if n < minima %}class="error"{% endif %}>{{ n|floatformat:"2" }}</span>{% endif %}</td>
           {% endfor %}
           <td><strong>{% if f.final is None %}-{% else %}<span {% if f.final < minima %}class="error"{% endif %}>{{ f.final }}</span>{% endif %}</strong></td>
         </tr>
@@ -34,12 +34,3 @@
     </tbody>
   </table>
 
-  <div class="tarjeta">
-    <h2>Promedio general: {% if general is None %}-{% else %}{{ general }}{% endif %}</h2>
-    <p class="secundario">Las notas se actualizan cuando tus docentes califican. Nota mínima: {{ minima }}.</p>
-  </div>
-
-  <p class="no-imprimir"><button type="button" onclick="window.print()">Imprimir boletín</button></p>
-  {% endif %}
-{% endif %}
-{% endblock %}

@@ -1,0 +1,29 @@
+{% for a in actividad.adjuntos.all %}
+  <div class="tarjeta">
+    <div class="fila">
+      <div>
+        <strong>{{ a.titulo }}</strong>
+        <p class="secundario">Material de apoyo</p>
+      </div>
+      <div>
+        {% if a.archivo %}
+          <a class="boton" href="{% url 'materiales:descargar_adjunto' a.id %}">Descargar</a>
+        {% endif %}
+        {% if puede_eliminar %}
+          <form method="post" action="{% url 'materiales:eliminar_adjunto' a.id %}"
+                style="display:inline"
+                onsubmit="return confirm('¿Quitar este adjunto?');">
+            {% csrf_token %}
+            <button type="submit" class="peligro">Quitar</button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+    {% if a.id_youtube %}
+      <iframe class="video"
+              src="https://www.youtube-nocookie.com/embed/{{ a.id_youtube }}"
+              title="{{ a.titulo }}" loading="lazy" allowfullscreen
+              referrerpolicy="strict-origin-when-cross-origin"></iframe>
+    {% endif %}
+  </div>
+{% endfor %}

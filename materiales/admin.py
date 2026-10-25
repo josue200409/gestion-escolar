@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import ArchivoEntrega, Material
+from .models import AdjuntoActividad, ArchivoEntrega, Material
 
 
 @admin.register(Material)
@@ -12,3 +12,6 @@ class MaterialAdmin(admin.ModelAdmin):
 @admin.register(ArchivoEntrega)
 class ArchivoEntregaAdmin(admin.ModelAdmin):
     list_display = ('nombre_original', 'entrega', 'subido')
+@admin.register(AdjuntoActividad)
+class AdjuntoActividadAdmin(admin.ModelAdmin):
+    list_display = ('titulo', 'actividad', 'creado')

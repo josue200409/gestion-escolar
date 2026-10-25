@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 
 from academico.models import Asignacion
-from actividades.models import Entrega
+from actividades.models import Actividad, Entrega
 
 from .validadores import extraer_id_youtube, validar_archivo
 
@@ -16,6 +16,10 @@ def ruta_material(instance, nombre):
 
 def ruta_entrega(instance, nombre):
     return f"entregas/{uuid.uuid4().hex}{os.path.splitext(nombre)[1].lower()}"
+
+
+def ruta_adjunto(instance, nombre):
+    return f"adjuntos/{uuid.uuid4().hex}{os.path.splitext(nombre)[1].lower()}"
 
 
 class Material(models.Model):
@@ -73,3 +77,39 @@ class ArchivoEntrega(models.Model):
 
     def __str__(self):
         return self.nombre_original
+
+
+class AdjuntoActividad(models.Model):
+    """Material de apoyo que el docente pone dentro de una actividad."""
+    actividad = models.ForeignKey(
+        Actividad, on_delete=models.CASCADE, related_name='adjuntos'
+    )
+    titulo = models.CharField(max_length=150)
+    archivo = models.FileField(
+        upload_to=ruta_adjunto, blank=True, validators=[validar_archivo]
+    )
+    enlace = models.URLField(blank=True)
+    creado = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'adjunto de actividad'
+        verbose_name_plural = 'adjuntos de actividad'
+        ordering = ['creado']
+
+    @property
+    def id_youtube(self):
+        return extraer_id_youtube(self.enlace)
+
+    def clean(self):
+        if not self.archivo and not self.enlace:
+            raise ValidationError('Adjunta un archivo o pega un enlace de YouTube.')
+        if self.enlace and not self.id_youtube:
+            raise ValidationError({'enlace': 'Solo se aceptan enlaces de YouTube.'})
+
+    def delete(self, *args, **kwargs):
+        if self.archivo:
+            self.archivo.delete(save=False)
+        super().delete(*args, **kwargs)
+
+    def __str__(self):
+        return self.titulo

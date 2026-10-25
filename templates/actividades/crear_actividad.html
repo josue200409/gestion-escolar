@@ -4,11 +4,49 @@
 <p><a href="{% url 'academico:curso_docente' asignacion.id %}">← Volver al curso</a></p>
 <h1>Nueva actividad</h1>
 <p class="secundario">{{ asignacion.materia }} · {{ asignacion.curso.grado }} {{ asignacion.curso.seccion }}</p>
+
 <div class="tarjeta">
-  <form method="post">
+  <h2>Puntos de cada unidad</h2>
+  <p class="secundario">Cada unidad vale 100: zona 50, parcial 20 y examen final 30. El parcial y el examen se pueden crear desde el día programado.</p>
+  <table>
+    <thead>
+      <tr><th>Unidad</th><th>Zona</th><th>Parcial</th><th>Examen final</th></tr>
+    </thead>
+    <tbody>
+      {% for r in resumen %}
+        <tr>
+          <td>{{ r.periodo.nombre }}</td>
+          <td>{{ r.zona.usados|floatformat:"-2" }} de {{ r.zona.tope|floatformat:"-2" }}</td>
+          <td>{{ r.parcial.usados|floatformat:"-2" }} de {{ r.parcial.tope|floatformat:"-2" }}<br><small class="secundario">{{ r.periodo.fecha_parcial|date:"d/m/Y"|default:"sin fecha" }}</small></td>
+          <td>{{ r.examen.usados|floatformat:"-2" }} de {{ r.examen.tope|floatformat:"-2" }}<br><small class="secundario">{{ r.periodo.fecha_examen|date:"d/m/Y"|default:"sin fecha" }}</small></td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="4">Este ciclo todavía no tiene unidades. Pide al administrador que las cree.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="tarjeta">
+  <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
     {{ form.as_p }}
+    <p class="secundario">Documentos e imágenes hasta 10 MB; videos hasta 50 MB. Para videos largos, usa un enlace de YouTube.</p>
     <button type="submit">Publicar</button>
   </form>
 </div>
+
+<script>
+  (function () {
+    var tipo = document.getElementById('id_tipo');
+    var puntos = document.getElementById('id_puntaje_maximo');
+    var fijos = { parcial: '20', examen: '30' };
+    function ajustar() {
+      if (fijos[tipo.value]) { puntos.value = fijos[tipo.value]; puntos.readOnly = true; }
+      else { puntos.readOnly = false; }
+    }
+    tipo.addEventListener('change', ajustar);
+    ajustar();
+  })();
+</script>
 {% endblock %}
