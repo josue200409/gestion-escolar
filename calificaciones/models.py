@@ -50,3 +50,29 @@ class Prorroga(models.Model):
     def __str__(self):
         hasta = timezone.localtime(self.hasta).strftime('%d/%m/%Y %H:%M')
         return f"{self.asignacion} · {self.periodo.nombre} · hasta {hasta}"
+
+from django.conf import settings
+
+
+class CambioNota(models.Model):
+    """Historial: cada vez que alguien cambia una nota desde el libro de notas."""
+    actividad = models.ForeignKey(
+        'actividades.Actividad', on_delete=models.CASCADE, related_name='cambios_nota'
+    )
+    estudiante = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='+'
+    )
+    anterior = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    nuevo = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    cambiado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='+'
+    )
+    fecha = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'cambio de nota'
+        verbose_name_plural = 'historial de notas'
+        ordering = ['-fecha']
+
+    def __str__(self):
+        return f"{self.estudiante} · {self.actividad}: {self.anterior} → {self.nuevo}"

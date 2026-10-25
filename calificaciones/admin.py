@@ -1,4 +1,4 @@
-from django.contrib import admin
+﻿from django.contrib import admin
 
 from config.admin_utils import ConAyuda
 
@@ -57,3 +57,26 @@ class ProrrogaAdmin(ConAyuda, admin.ModelAdmin):
     @admin.display(description='Vigente', boolean=True)
     def vigente(self, obj):
         return obj.vigente
+
+    from .models import CambioNota
+
+
+from .models import CambioNota
+
+
+@admin.register(CambioNota)
+class CambioNotaAdmin(admin.ModelAdmin):
+    list_display = ('fecha', 'actividad', 'estudiante', 'anterior', 'nuevo', 'cambiado_por')
+    list_filter = ('actividad__asignacion__curso',)
+    date_hierarchy = 'fecha'
+
+    # El historial es de solo lectura: nadie puede crear, editar ni borrar registros.
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+

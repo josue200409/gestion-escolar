@@ -9,9 +9,9 @@
   <p class="secundario">{{ user.get_full_name|default:user.username }} · {{ curso.grado }} {{ curso.seccion }} · Ciclo {{ curso.ciclo }}</p>
 
   {% if not periodos %}
-    <div class="tarjeta"><p>Este ciclo todavía no tiene periodos definidos.</p></div>
+    <div class="tarjeta"><p>Este ciclo todavía no tiene unidades definidas.</p></div>
   {% else %}
-   <table>
+  <table>
     <thead>
       <tr>
         <th>Materia</th>
@@ -34,3 +34,12 @@
     </tbody>
   </table>
 
+  <div class="tarjeta">
+    <h2>Promedio general: {% if general is None %}-{% else %}{{ general }}{% endif %}</h2>
+    <p class="secundario">Las notas se actualizan cuando tus docentes califican. Nota mínima: {{ minima }}.</p>
+  </div>
+
+  <p class="no-imprimir"><button type="button" onclick="window.print()">Imprimir boletín</button></p>
+  {% endif %}
+{% endif %}
+{% endblock %}

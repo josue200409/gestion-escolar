@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load l10n %}
 {% block titulo %}Libro de notas{% endblock %}
 {% block contenido %}
 <p><a href="{% url 'academico:curso_docente' asignacion.id %}">← Volver al curso</a></p>
@@ -18,44 +19,79 @@
 
   <div class="tarjeta">
     <p>Zona repartida: <strong>{{ zona_repartida|floatformat:"-2" }} de 50</strong> puntos.</p>
-    <p class="secundario">Parcial: {{ elegido.fecha_parcial|date:"d/m/Y"|default:"sin fecha" }}. Examen final: {{ elegido.fecha_examen|date:"d/m/Y"|default:"sin fecha" }}. Notas hasta: {{ elegido.fecha_limite_notas|date:"d/m/Y"|default:"sin fecha límite" }}.</p>
-    {% if not elegido.notas_abiertas %}
-      <p class="error">El plazo para subir notas de esta unidad terminó.</p>
+    <p class="secundario">Parcial: {{ elegido.fecha_parcial|date:"d/m/Y"|default:"sin fecha" }}. Examen final: {{ elegido.fecha_examen|date:"d/m/Y"|default:"sin fecha" }}. Notas hasta: {{ elegido.fecha_cierre|date:"d/m/Y" }}.</p>
+    {% if prorroga %}
+      <p><strong>Edición habilitada por el administrador hasta el {{ prorroga.hasta|date:"d/m/Y H:i" }}.</strong></p>
+    {% elif not editable %}
+      <p class="error">El plazo para subir notas de esta unidad terminó. Si necesitas modificar algo, pide al administrador que la reabra.</p>
     {% endif %}
   </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Estudiante</th>
-        {% for c in columnas %}
-          <th><a href="{% url 'actividades:actividad_docente' c.actividad.id %}">{{ c.etiqueta }}</a><br><small class="secundario">{{ c.actividad.puntaje_maximo|floatformat:"-2" }} pts</small></th>
-        {% endfor %}
-        <th>Zona<br><small class="secundario">50</small></th>
-        <th>Parcial<br><small class="secundario">20</small></th>
-        <th>Examen<br><small class="secundario">30</small></th>
-        <th>Total<br><small class="secundario">100</small></th>
-        <th>Final</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for f in filas %}
-        <tr>
-          <td>{{ f.estudiante.last_name }}, {{ f.estudiante.first_name }}</td>
-          {% for n in f.celdas %}
-            <td>{% if n is None %}-{% else %}{{ n|floatformat:"2" }}{% endif %}</td>
+  {% if errores_lista %}
+    <div class="tarjeta" role="alert">
+      <p class="error">No se guardó nada. Corrige estas notas:</p>
+      <ul>{% for e in errores_lista %}<li>{{ e }}</li>{% endfor %}</ul>
+    </div>
+  {% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="unidad" value="{{ elegido.id }}">
+    <p class="acciones">
+      <a class="boton" href="{% url 'actividades:crear_actividad' asignacion.id %}">Crear actividad</a>
+      {% if editable and columnas %}<button type="submit">Guardar notas</button>{% endif %}
+    </p>
+    {% if ultimo %}
+      <p class="secundario">Último cambio{% if ultimo.cambiado_por %} por {{ ultimo.cambiado_por.get_full_name|default:ultimo.cambiado_por.username }}{% endif %} hace {{ ultimo.fecha|timesince }}.</p>
+    {% endif %}
+
+    {% if not columnas %}
+      <div class="tarjeta"><p>Esta unidad todavía no tiene actividades. Crea la primera con el botón de arriba.</p></div>
+    {% endif %}
+
+    <div class="desplazable">
+      <table class="tabla-notas">
+        <thead>
+          <tr>
+            <th>Estudiante</th>
+            {% for c in columnas %}
+              <th><a href="{% url 'actividades:actividad_docente' c.actividad.id %}">{{ c.etiqueta }}</a><br><small class="secundario">{{ c.actividad.puntaje_maximo|floatformat:"-2" }} pts</small></th>
+            {% endfor %}
+            <th>Zona<br><small class="secundario">50</small></th>
+            <th>Parcial<br><small class="secundario">20</small></th>
+            <th>Examen<br><small class="secundario">30</small></th>
+            <th>Total<br><small class="secundario">100</small></th>
+            <th>Final</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for f in filas %}
+            <tr>
+              <td>{{ f.nombre }}</td>
+              {% for c in f.celdas %}
+                <td>
+                  <input class="nota" type="number" inputmode="decimal"
+                         name="{{ c.campo }}" value="{{ c.valor }}"
+                         min="0" max="{{ c.actividad.puntaje_maximo|unlocalize }}" step="0.01"
+                         aria-label="Nota de {{ f.nombre }} en {{ c.etiqueta }}"
+                         {% if c.error %}aria-invalid="true" title="{{ c.error }}"{% endif %}
+                         {% if not editable %}readonly{% endif %}>
+                </td>
+              {% endfor %}
+              <td>{% if f.d.zona is None %}-{% else %}{{ f.d.zona|floatformat:"2" }}{% endif %}</td>
+              <td>{% if f.d.parcial is None %}-{% else %}{{ f.d.parcial|floatformat:"2" }}{% endif %}</td>
+              <td>{% if f.d.examen is None %}-{% else %}{{ f.d.examen|floatformat:"2" }}{% endif %}</td>
+              <td><strong {% if f.d.total is not None and f.d.total < minima %}class="error"{% endif %}>{% if f.d.total is None %}-{% else %}{{ f.d.total|floatformat:"2" }}{% endif %}</strong></td>
+              <td>{% if f.final is None %}-{% else %}{{ f.final }}{% endif %}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="{{ columnas|length|add:6 }}">No hay estudiantes matriculados.</td></tr>
           {% endfor %}
-          <td>{% if f.d.zona is None %}-{% else %}{{ f.d.zona|floatformat:"2" }}{% endif %}</td>
-          <td>{% if f.d.parcial is None %}-{% else %}{{ f.d.parcial|floatformat:"2" }}{% endif %}</td>
-          <td>{% if f.d.examen is None %}-{% else %}{{ f.d.examen|floatformat:"2" }}{% endif %}</td>
-          <td><strong {% if f.d.total is not None and f.d.total < minima %}class="error"{% endif %}>{% if f.d.total is None %}-{% else %}{{ f.d.total|floatformat:"2" }}{% endif %}</strong></td>
-          <td>{% if f.final is None %}-{% else %}{{ f.final }}{% endif %}</td>
-        </tr>
-      {% empty %}
-        <tr><td colspan="{{ columnas|length|add:6 }}">No hay estudiantes matriculados.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  <p class="secundario">Un guion significa que no hay nota todavía (sin entregar o sin calificar). La nota de la unidad es la suma de puntos sobre 100; "Final" es el promedio de todas las unidades. Nota mínima: {{ minima }}.</p>
+        </tbody>
+      </table>
+    </div>
+  </form>
+
+  <p class="secundario">Escribe la nota de cada actividad y pulsa Guardar notas. Una casilla vacía significa que no hay nota todavía. Los totales se actualizan al guardar. La nota de la unidad es la suma de puntos sobre 100; "Final" es el promedio de todas las unidades. Nota mínima: {{ minima }}.</p>
 {% endif %}
 {% endblock %}
